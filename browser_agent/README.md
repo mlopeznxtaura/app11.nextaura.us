@@ -1,58 +1,112 @@
-# Browser Agent for MCP Integration
+# Browser Agents for app9.nextaura.us
 
-This module provides browser automation capabilities integrated with MCP (Model Context Protocol) for agentic workflows.
+Integrated multi-backend browser automation combining three specialized agents.
 
 ## Architecture
 
-- **BrowserAgent**: Core agent for navigation and interaction
-- **MCPBrowserServer**: MCP server exposing browser tools to external clients
+| Backend | Purpose | Privacy |
+|---------|---------|---------|
+| **fouwser** | MCP server access for external agents | Local + cloud |
+| **ondevice** | Fully local WebLLM/WebGPU agent | 100% on-device |
+| **lmnr** | Vision-based reasoning for complex tasks | Cloud (optional) |
 
-## Setup
+## Features
+
+### Unified Agent
+- **Single API** - Call `UnifiedBrowserAgent` regardless of backend
+- **Auto-routing** - Intelligent backend selection based on task type
+- **MCP server** - Expose all capabilities via MCP
+
+### Task Routing
+| Task Type | Backend |
+|-----------|---------|
+| Private/local tasks | ondevice |
+| Vision/screenshot analysis | lmnr |
+| MCP/CLI automation | fouwser |
+
+## Installation
 
 ```bash
-pip install playwright playwright-stealth
-playwright install chromium
+pip install -r requirements.txt
+```
+
+## Configuration
+
+Set environment variables:
+
+```bash
+# Default backend
+export BROWSER_DEFAULT=lmnr
+
+# Fouwser (MCP server)
+export FOUWSER_ENABLED=true
+export FOUWSER_PORT=4000
+
+# On-device (private)
+export ONDEVICE_ENABLED=true
+export ONDEVICE_WEBGPU=true
+export ONDEVICE_OFFLINE=true
+
+# LMNR (vision-based)
+export LMNR_ENABLED=true
+export LMNR_MODEL=gemini-2.5-pro
+export LMNR_API_KEY=your_key
 ```
 
 ## Usage
 
-### Basic Navigation
+### Unified Agent
 ```python
-from browser_agent import BrowserAgent, MCPBrowserServer
-from playwright.sync_api import sync_playwright
+from browser_agent import UnifiedBrowserAgent, BrowserConfig
 
-with sync_playwright() as p:
-    browser = p.chromium.launch()
-    page = browser.new_page()
-    agent = BrowserAgent(page, model_client)
-    
-    result = await agent.navigate("https://example.com")
+# Load config from env
+config = BrowserConfig.from_env()
+agent = UnifiedBrowserAgent(config)
+await agent.initialize()
+
+# Navigate (auto-selects backend)
+result = await agent.navigate("https://example.com")
+
+# Execute task (vision-based)
+result = await agent.execute_task("Find pricing info and summarize")
 ```
 
-### MCP Integration
+### MCP Server
 ```python
-server = MCPBrowserServer(agent, port=4000)
-await server.start()
+from browser_agent.integrator import MCPUnifiedServer
+
+server = MCPUnifiedServer(agent)
+# Connect to MCP client (e.g., claude-code, gemini-cli)
 ```
 
-### Execute Natural Language Tasks
+### Direct Backend Access
 ```python
-task = "Search for 'weather in San Francisco' and capture the temperature"
-result = await agent.execute_task(task)
+# Use on-device only (privacy)
+result = await agent.execute_task("private task", backend="ondevice")
+
+# Use lmnr for vision
+result = await agent.execute_task("analyze screenshot", backend="lmnr")
 ```
 
-## Tools Available
+## MCP Tools
 
-| Tool | Description |
-|------|-------------|
-| browser_navigate | Navigate to a URL |
-| browser_click | Click an element |
-| browser_fill | Fill input field |
-| browser_task | Execute complex task with vision-based reasoning |
-| browser_screenshot | Capture page screenshot |
+Available via `MCPUnifiedServer`:
+- `browser_navigate` - Navigate to URL
+- `browser_task` - Execute task with reasoning
+- `browser_click` - Click element
+- `browser_status` - Check backend health
 
-## Dependencies
+## Privacy
 
-- `playwright` - Browser automation
-- `playwright-stealth` - Anti-detection
-- LLM client for vision-based reasoning (e.g., Gemini, Claude)
+| Backend | API Keys | Local Processing | Offline |
+|---------|----------|------------------|---------|
+| fouwser | Optional | Partial | No |
+| ondevice | No | 100% | Yes |
+| lmnr | Required | No | No |
+
+## License
+
+See individual backend repositories:
+- [fouwser](https://github.com/alphanome-ai/Fouwser)
+- [on-device-browser-agent](https://github.com/RunanywhereAI/on-device-browser-agent)
+- [lmnr-ai/index](https://github.com/lmnr-ai/index)

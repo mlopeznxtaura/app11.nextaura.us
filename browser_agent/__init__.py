@@ -1,5 +1,12 @@
-"""Browser agent for MCP-driven automation."""
-from .agent import BrowserAgent
-from .mcp_server import MCPBrowserServer
+"""Unified browser agent integration for app9.nextaura.us.
 
-__all__ = ["BrowserAgent", "MCPBrowserServer"]
+Integrates three browser agent backends:
+- fouwser: MCP-enabled Chromium fork
+- ondevice: Privacy-focused on-device agent (WebLLM/WebGPU)
+- lmnr: Vision-based reasoning agent
+"""
+
+from .integrator import UnifiedBrowserAgent
+from .config import BrowserConfig
+
+__all__ = ["UnifiedBrowserAgent", "BrowserConfig"]

@@ -1,41 +1,41 @@
 #!/usr/bin/env python3
-"""Start MCP browser agent service."""
+"""Start unified browser agent server."""
 import asyncio
 import os
+import sys
 from dotenv import load_dotenv
 
 load_dotenv()
 
+
 async def main():
-    """Start MCP browser server."""
-    from browser_agent import BrowserAgent, MCPBrowserServer
-    from playwright.async_api import async_playwright
+    """Initialize and start unified browser agent."""
+    from browser_agent.config import BrowserConfig
+    from browser_agent.integrator import UnifiedBrowserAgent, MCPUnifiedServer
     
-    # Initialize browser
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(
-            headless=os.getenv("BROWSER_HEADLESS", "true") == "true"
-        )
-        context = await browser.new_context(
-            viewport={"width": 1280, "height": 720}
-        )
-        page = await context.new_page()
-        
-        # Initialize model client (placeholder - replace with actual LLM client)
-        model_client = type("ModelClient", (), {
-            "generate": lambda self, prompt: asyncio.sleep(0.1) or "[]"
-        })()
-        
-        # Create agent and MCP server
-        agent = BrowserAgent(page, model_client)
-        server = MCPBrowserServer(agent, port=int(os.getenv("BROWSER_PORT", "4000")))
-        
-        # Run browser service
-        print("Browser agent ready")
-        print(f"Tools: {[t['name'] for t in server.get_tools_schema()]}")
-        
-        # Keep running
-        await asyncio.Event().wait()
+    # Load configuration
+    config = BrowserConfig.from_env()
+    print(f"Default backend: {config.default_backend}")
+    
+    # Initialize unified agent
+    agent = UnifiedBrowserAgent(config)
+    await agent.initialize()
+    
+    # Get MCP server
+    mcp_server = MCPUnifiedServer(agent)
+    
+    print("\nInitialized browser agents:")
+    for backend, status in (await agent.get_status()).items():
+        print(f"  - {backend}: {status}")
+    
+    print("\nMCP Tools Available:")
+    for tool in mcp_server.get_tools_schema():
+        print(f"  - {tool['name']}: {tool['description']}")
+    
+    print("\nServer ready. Waiting for MCP connections...")
+    
+    # Keep running
+    await asyncio.Event().wait()
 
 
 if __name__ == "__main__":
