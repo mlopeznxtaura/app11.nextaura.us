@@ -1,0 +1,852 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NextAura Multimodal Fine-tune</title>
+<meta name="description" content="NextAura GPU pretrain and SFT lab. Machine index: /agent.json /llms.txt">
+<link rel="agent" type="application/json" href="/agent.json">
+<link rel="alternate" type="text/plain" href="/agent.txt" title="Agent contract">
+<link rel="alternate" type="text/plain" href="/llms.txt" title="LLMs.txt">
+<style>
+:root{color-scheme:dark}
+body{margin:0;font-family:Consolas,ui-monospace,Menlo,monospace;background:#05070a;color:#d7e0f0}
+header{padding:12px 24px;border-bottom:1px solid #1f2937;background:#0a0f1c;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+h1{font-size:15px;margin:0;color:#8ab4ff}
+.tag{font-size:11px;color:#64748b}
+.split{display:block;min-height:calc(100vh - 52px)}
+.page-main{padding:18px 24px;max-width:100%}
+.col-left{border-right:0;padding:0}
+.col-right{padding:0;background:transparent}
+.infer-context-panel{margin:10px 0 12px;padding:10px 12px;border:1px solid #334155;border-radius:8px;background:#0a0f1c;font-size:10px;line-height:1.55;color:#94a3b8}
+.infer-ctx-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px}
+@media(max-width:900px){.infer-ctx-grid{grid-template-columns:1fr}}
+.infer-ctx-row{display:flex;gap:6px}
+.infer-ctx-k{color:#64748b;min-width:88px;flex-shrink:0}
+.infer-ctx-v{color:#cbd5e1}
+.infer-ctx-v.warn{color:#fbbf24}
+.infer-ctx-v.ok{color:#86efac}
+.infer-prompt-chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0}
+.infer-prompt-chips button.infer-prompt-chip{cursor:pointer}
+.infer-prompt-chips button.infer-prompt-chip:hover{border-color:#93c5fd;color:#e2e8f0}
+.infer-prompt-chips button{font-size:10px;padding:4px 8px;margin:0}
+#trainModeBadge.pretrain{background:#1e3a8a;color:#93c5fd}
+#trainModeBadge.smoke{opacity:0.85;border:1px dashed #fbbf24}
+.playbook-step1-panel{border:1px solid #334155;border-radius:8px;padding:12px 14px;margin:10px 0;background:#0a0f1c}
+.playbook-mode-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:8px 0 12px}
+.playbook-footprint-row{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 4px;align-items:center}
+#playbookStep1Panel .config-section{margin-top:10px}
+.infer-bottom .panel{margin-bottom:0}
+.infer-layout{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+@media(max-width:1000px){.infer-layout{grid-template-columns:1fr}}
+.cheat-sheet-full{padding:12px 24px 0;border-bottom:1px solid #1f2937;background:#070a10}
+.cheat-sheet-full .scale-panel{margin:0 0 12px}
+.scale-tables-grid{display:grid;grid-template-columns:1.1fr 1.2fr 1fr;gap:12px;align-items:start}
+@media(max-width:1200px){.scale-tables-grid{grid-template-columns:1fr}}
+.scale-tables-grid .scale-table{margin-top:0!important}
+.scale-notes{margin-top:4px}
+.wrap{max-width:100%}
+h2{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:#64748b;margin:0 0 10px}
+.panel{border:1px solid #1f2937;border-radius:8px;background:#0a0f1c;padding:12px;margin-bottom:12px}
+.row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media(max-width:1000px){.infer-layout{grid-template-columns:1fr}}
+label{font-size:10px;color:#64748b;display:block;margin-bottom:4px}
+input,select,textarea{width:100%;background:#0f1625;border:1px solid #243150;color:#e2e8f0;border-radius:5px;padding:8px;font-size:12px;box-sizing:border-box;font-family:inherit}
+input[type=file]{padding:6px}
+button{background:linear-gradient(135deg,#3f7bff,#7a47ff);border:0;color:#fff;font-weight:600;padding:10px 14px;border-radius:6px;cursor:pointer;margin:8px 8px 0 0}
+button.secondary{background:#1e2937;border:1px solid #334155}
+button.danger{background:#7f1d1d}
+button.ok{background:#166534}
+button.warn{background:#854d0e}
+button:disabled{opacity:.4;cursor:not-allowed}
+.hint{font-size:10px;color:#64748b;line-height:1.45}
+#stats{font-size:12px;color:#94a3b8;margin:8px 0}
+#mirror{height:340px;overflow-y:auto;background:#0d0d0d;border:1px solid #1f2937;border-radius:8px;padding:12px;font-size:12px;line-height:1.45}
+.line-red{color:#ff5555}.line-green{color:#55ff55}.line-yellow{color:#ffff55}.line-cyan{color:#55ffff}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;margin-left:8px}
+.badge.ok{background:#14532d;color:#86efac}
+.badge.bad{background:#7f1d1d;color:#fca5a5}
+#progressBar{height:10px;background:#1e2937;border-radius:6px;overflow:hidden;margin:10px 0}
+#progressFill{height:100%;width:0;background:linear-gradient(90deg,#3f7bff,#4ade80);transition:width .4s}
+#inferChat{height:320px;overflow-y:auto;background:#0d0d0d;border:1px solid #1f2937;border-radius:8px;padding:12px;font-size:12px}
+.iq{color:#7dd3fc;margin:8px 0 4px;white-space:pre-wrap}
+.ia{color:#86efac;margin:0 0 12px;white-space:pre-wrap}
+.imeta{color:#64748b;font-size:10px;margin:-8px 0 12px}
+a{color:#8ab4ff}
+.config-section{margin-top:10px}
+.config-section:first-of-type{margin-top:0}
+.hover-context{opacity:0;max-height:0;overflow:hidden;transition:opacity .18s ease,max-height .25s ease,margin .18s,padding .18s;margin-top:0;padding:0 10px;font-size:10px;color:#94a3b8;line-height:1.55;border-left:2px solid #334155;pointer-events:none}
+.config-section:hover .hover-context{opacity:1;max-height:520px;margin-top:8px;padding:8px 10px}
+.config-section.infer-deep:hover .hover-context{max-height:920px}
+.hover-context strong{color:#cbd5e1;font-weight:600}
+.toggle-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.toggle-switch{position:relative;width:28px;height:16px;flex-shrink:0}
+.toggle-switch input{opacity:0;width:0;height:0;position:absolute}
+.toggle-slider{position:absolute;inset:0;background:#334155;border-radius:999px;cursor:pointer;transition:.2s}
+.toggle-slider:before{content:'';position:absolute;height:12px;width:12px;left:2px;bottom:2px;background:#94a3b8;border-radius:50%;transition:.2s}
+.toggle-switch input:checked+.toggle-slider{background:#3f7bff}
+.toggle-switch input:checked+.toggle-slider:before{transform:translateX(12px);background:#fff}
+.toggle-switch input:disabled+.toggle-slider{opacity:.35;cursor:not-allowed}
+.field-off{opacity:.45}
+.field-off input:not([type=checkbox]),.field-off select{pointer-events:none}
+.recipe-panel{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+@media(max-width:900px){.recipe-panel{grid-template-columns:1fr}}
+.recipe-col{font-size:11px;line-height:1.55;color:#94a3b8;background:#0d1118;border:1px solid #1f2937;border-radius:6px;padding:10px}
+.recipe-col h3{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin:0 0 6px;font-weight:600}
+.recipe-line{margin:2px 0}
+.recipe-pending .recipe-diff{color:#fbbf24}
+.recipe-pending .recipe-same{color:#64748b}
+.cfg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px}
+.cfg-grid.cols-4{grid-template-columns:repeat(4,1fr)}
+.cfg-grid.cols-2{grid-template-columns:repeat(2,1fr)}
+@media(max-width:900px){.cfg-grid,.cfg-grid.cols-4{grid-template-columns:repeat(2,1fr)}}
+.cfg-cell label.lbl{display:flex;align-items:center;gap:4px;font-size:10px;color:#64748b;margin-bottom:3px;min-height:16px}
+.cfg-cell input,.cfg-cell select{padding:5px 6px;font-size:11px}
+.cfg-cell .tag{font-size:9px}
+.cfg-cell.field-off input:not([type=checkbox]),.cfg-cell.field-off select{opacity:.45;pointer-events:none}
+.hf-chips{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;padding:4px 0}
+.hf-chips label.chip{font-size:10px;color:#94a3b8;display:inline-flex;align-items:center;gap:3px;cursor:pointer;margin:0;white-space:nowrap}
+.hf-chips label.chip input[type=checkbox]{width:auto;margin:0;padding:0;accent-color:#3f7bff}
+.stage4-sub{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin:10px 0 4px}
+.stage4-sub:first-child{margin-top:0}
+#archLockHint{font-size:10px;color:#fbbf24;margin:4px 0 0;display:none}
+.scale-panel{margin-top:8px;padding:8px 10px;background:#0d1118;border:1px solid #1f2937;border-radius:6px}
+.scale-head{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+.scale-mode-toggle{display:inline-flex;border:1px solid #334155;border-radius:6px;overflow:hidden;flex-shrink:0}
+.scale-mode-btn{font-size:10px;padding:4px 10px;border:0;background:#111827;color:#94a3b8;cursor:pointer;font-weight:600}
+.scale-mode-btn:hover{color:#e2e8f0;background:#1e293b}
+.scale-mode-btn.active{background:#1d4ed8;color:#fff}
+.scale-panel h3{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin:0;font-weight:600;flex:1}
+.scale-law{font-size:10px;color:#94a3b8;margin:0 0 8px;line-height:1.45}
+.scale-table{width:100%;border-collapse:collapse;font-size:10px;color:#94a3b8}
+.scale-table th,.scale-table td{padding:4px 6px;text-align:right;border-bottom:1px solid #1f2937}
+.scale-table th:first-child,.scale-table td:first-child,.scale-table th:last-child,.scale-table td:last-child{text-align:left}
+.scale-table td.scale-rec{max-width:none;line-height:1.35;color:#cbd5e1}
+.scale-table th{color:#64748b;font-weight:600}
+.scale-table tr.row-current td{color:#86efac;background:#0f1a12}
+.scale-table tr.row-target td{color:#fbbf24;background:#1a1508}
+.scale-table tr.row-footprint td{color:#cbd5e1}
+.scale-target-note{font-size:10px;color:#fbbf24;margin-top:6px}
+.history-panel{margin-bottom:12px}
+.history-table{width:100%;border-collapse:collapse;font-size:10px;color:#94a3b8}
+.history-table th,.history-table td{padding:4px 6px;text-align:left;border-bottom:1px solid #1f2937;vertical-align:top}
+.history-table th{color:#64748b;font-weight:600}
+.history-table tr.row-loaded td{background:#0f1a12;color:#86efac}
+.history-table tr.verdict-discard td{color:#fca5a5}
+.history-table tr.verdict-keep td{color:#86efac}
+.history-table tr.verdict-noise td{color:#fbbf24}
+.history-table tr.verdict-floor td{color:#7dd3fc}
+.history-lessons{font-size:10px;color:#64748b;margin:6px 0 0;line-height:1.45}
+.history-lessons li{margin:2px 0}
+.mm-vjepa-cheat{margin-top:10px}
+.mm-vjepa-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px}
+@media(max-width:1100px){.mm-vjepa-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:700px){.mm-vjepa-grid{grid-template-columns:1fr}}
+.mm-vjepa-card{background:#0d1118;border:1px solid #1f2937;border-radius:6px;padding:10px;display:flex;flex-direction:column;gap:6px}
+.mm-vjepa-card[data-family="vjepa"]{border-color:#312e81}
+.mm-vjepa-card-head{display:flex;align-items:center;gap:8px;font-size:12px;color:#e2e8f0}
+.mm-vjepa-tag{font-size:9px;text-transform:uppercase;letter-spacing:.8px;padding:2px 6px;border-radius:4px;background:#1e293b;color:#93c5fd}
+.mm-vjepa-card[data-family="vjepa"] .mm-vjepa-tag{background:#312e81;color:#c4b5fd}
+.mm-vjepa-blurb{font-size:10px;color:#94a3b8;margin:0;line-height:1.45}
+.mm-vjepa-lines{font-size:10px;color:#cbd5e1;line-height:1.5;background:#0a0f1c;border-radius:4px;padding:6px 8px}
+.mm-vjepa-line{margin:1px 0;font-family:inherit}
+.mm-vjepa-apply{margin:4px 0 0!important;align-self:flex-start;font-size:11px;padding:6px 10px!important}
+#mmVjepaRecipeStatus{font-size:10px;color:#86efac;margin-top:6px;min-height:14px}
+.run-goal-panel{border:1px solid #1f2937;border-radius:8px;background:#0a0f1c;padding:12px;margin:12px 0}
+.run-goal-panel h2{margin:0 0 8px}
+.run-goal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:900px){.run-goal-grid{grid-template-columns:1fr}}
+.run-goal-live{margin-top:10px;padding:10px;border:1px solid #334155;border-radius:6px;background:#070a10}
+.run-goal-live-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.run-goal-live-title{font-size:13px;color:#e2e8f0;font-weight:600}
+.run-goal-badge{font-size:10px;padding:3px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:.5px}
+.run-goal-badge.ok{background:#14532d;color:#86efac}
+.run-goal-badge.warn{background:#713f12;color:#fcd34d}
+.run-goal-badge.run{background:#1e3a8a;color:#93c5fd}
+.run-goal-badge.idle{background:#1e293b;color:#94a3b8}
+.run-goal-bar-wrap{height:8px;background:#1e293b;border-radius:4px;overflow:hidden;margin:6px 0 2px}
+.run-goal-bar{height:100%;background:linear-gradient(90deg,#3f7bff,#4ade80);width:0%;transition:width .35s}
+.run-goal-bar.warn{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
+.run-goal-meta{font-size:10px;color:#64748b;line-height:1.45}
+.gpu-vram-live{margin:10px 0 12px;padding:10px;border:1px solid #334155;border-radius:6px;background:#070a10}
+.gpu-vram-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.gpu-vram-title{font-size:13px;color:#e2e8f0;font-weight:600}
+.gpu-vram-badge{font-size:10px;padding:3px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:.5px}
+.gpu-vram-badge.run{background:#1e3a8a;color:#93c5fd}
+.gpu-vram-badge.idle{background:#1e293b;color:#94a3b8}
+.gpu-vram-bar{height:100%;background:linear-gradient(90deg,#a855f7,#38bdf8);width:0%;transition:width .35s}
+.run-goal-stop-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:6px;font-size:11px;color:#94a3b8}
+.run-goal-stop-row label{display:inline-flex;align-items:center;gap:4px;cursor:pointer;margin:0}
+.run-playbook{border:1px solid #1e3a5f;border-radius:8px;background:#060b14;padding:12px 14px;margin:12px 0}
+.run-playbook h2{margin:0 0 6px;font-size:14px;color:#e2e8f0}
+.run-playbook-steps{margin:0;padding:0 0 0 18px;color:#94a3b8;font-size:11px;line-height:1.55}
+.run-playbook-steps li{margin:6px 0}
+.run-playbook-steps strong{color:#cbd5e1}
+.run-playbook-actions{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 8px}
+.run-playbook-actions button{font-size:11px;padding:6px 10px}
+.run-playbook-meta{font-size:10px;color:#64748b;line-height:1.5}
+.run-playbook-log{margin-top:8px;padding:8px 10px;border-radius:6px;background:#0a0f1c;border:1px solid #1f2937;font-size:10px;color:#94a3b8;line-height:1.55}
+.run-playbook-log code{color:#93c5fd;font-family:inherit}
+.workflow-top{padding:12px 24px 0;background:#06080e;border-bottom:1px solid #1f2937}
+.workflow-top .run-playbook,.workflow-top .run-goal-panel{margin:0 0 12px}
+.run-playbook-steps li.wf-ok strong{color:#86efac}
+.run-playbook-steps li.wf-bad strong{color:#f87171}
+.run-playbook-steps li.wf-active strong{color:#93c5fd}
+.run-playbook-steps li.wf-pending strong{color:#64748b}
+.run-playbook-step-hint{display:block;font-size:10px;margin:2px 0 0 0;color:#64748b}
+.run-playbook-step-hint.wf-bad-text{color:#f87171}
+.run-playbook-step-hint.wf-ok-text{color:#86efac}
+.run-playbook-step-hint.wf-muted{color:#475569}
+.run-playbook-lock-row{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px 0}
+.run-playbook-lock-row button{font-size:10px;padding:4px 8px;margin:0}
+.workflow-gated{opacity:.42;pointer-events:none;user-select:none;position:relative}
+.workflow-gated.workflow-unlocked{opacity:1;pointer-events:auto;user-select:auto}
+.workflow-gate-banner{font-size:10px;color:#f87171;margin:0 0 8px;padding:6px 8px;border:1px solid #7f1d1d;border-radius:6px;background:#1a0a0a}
+.playbook-stream-panel{margin:10px 0 12px;padding:10px 12px;border:1px solid #1e3a5f;border-radius:8px;background:#0a0f1c}
+.playbook-stream-panel .row{margin-bottom:0}
+.playbook-preset-row{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.playbook-preset-row button{font-size:11px;padding:6px 10px;margin:0}
+#workflowStatus{font-size:10px;color:#64748b;margin:6px 0 0}
+.changelog-footer{padding:14px 24px 24px;border-top:1px solid #1f2937;background:#05070a}
+.changelog-footer .panel{margin:0;padding:12px 14px}
+.changelog-footer h2{margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:#64748b}
+.changelog-meta{font-size:10px;color:#64748b;margin:0 0 8px}
+.changelog-list{margin:0;padding:0 0 0 16px;font-size:10px;color:#94a3b8;line-height:1.55;max-height:220px;overflow-y:auto}
+.changelog-list li{margin:4px 0}
+.changelog-date{color:#64748b;margin-right:6px}
+.changelog-sha{color:#93c5fd;margin-right:6px}
+.changelog-author{color:#64748b}
+.theory-top{padding:14px 24px 0;background:#06080e;border-bottom:1px solid #1f2937}
+.theory-panel{margin:0 0 14px;padding:14px 16px}
+.theory-panel h2{font-size:13px;color:#e2e8f0;letter-spacing:.3px;text-transform:none;margin:0 0 10px}
+.theory-panel h3{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin:14px 0 8px;font-weight:600}
+.theory-prose{font-size:12px;line-height:1.65;color:#cbd5e1;margin:0 0 10px;max-width:920px}
+.theory-prose strong{color:#e2e8f0}
+.theory-formulas{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0 4px}
+@media(max-width:900px){.theory-formulas{grid-template-columns:1fr}}
+.theory-formula{background:#0d1118;border:1px solid #1f2937;border-radius:6px;padding:10px 12px}
+.theory-formula-title{font-size:10px;color:#64748b;margin:0 0 6px;text-transform:uppercase;letter-spacing:.8px}
+.theory-formula-body{font-size:13px;color:#e2e8f0;overflow-x:auto}
+.theory-formula-note{font-size:10px;color:#64748b;margin:6px 0 0;line-height:1.45}
+.theory-list{margin:6px 0 0;padding-left:18px;font-size:12px;line-height:1.6;color:#cbd5e1}
+.theory-list li{margin:6px 0}
+.theory-list strong{color:#e2e8f0}
+.theory-recipe{border-top:1px solid #1f2937;margin-top:14px;padding-top:12px}
+.theory-recipe-tag{display:inline-block;font-size:9px;text-transform:uppercase;letter-spacing:.8px;padding:2px 7px;border-radius:4px;background:#312e81;color:#c4b5fd;margin-bottom:8px}
+.theory-recipe-actions{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 4px}
+.theory-recipe-actions button{font-size:11px;padding:8px 12px;margin:0}
+.recipe-template-row{border:1px solid #312e81;border-radius:8px;padding:10px 12px;margin:0 0 10px;background:#0a0f1c}
+.recipe-template-row h3{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#c4b5fd;margin:0 0 8px;font-weight:600}
+details.theory-collapse summary{cursor:pointer;font-size:11px;color:#64748b;user-select:none;list-style:none}
+details.theory-collapse summary::-webkit-details-marker{display:none}
+details.theory-collapse summary::before{content:'▸ ';color:#64748b}
+details.theory-collapse[open] summary::before{content:'▾ '}
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<header>
+  <h1>NextAura Fine-tune <span class="badge" id="readyBadge">…</span> <span class="badge pretrain" id="trainModeBadge">pretrain</span></h1>
+  <div class="infer-header-bar" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <label class="tag" for="inferModelSelect">Infer model</label>
+    <select id="inferModelSelect" onchange="switchInferModel()" style="min-width:220px;max-width:360px"></select>
+    <button type="button" class="secondary" id="inferSyncUpcloudBtn" onclick="syncUpcloudCheckpoints()" title="Archive local checkpoints to UpCloud">Sync → UpCloud</button>
+    <button type="button" class="secondary" onclick="document.querySelector('.infer-bottom').scrollIntoView({behavior:'smooth'})">Stage 2 ↓</button>
+    <span class="tag" id="inferHeaderStatus">—</span>
+  </div>
+  <span class="tag" id="hostBadge" title="Live session — loaded model, stream, device">app9.nextaura.us · …</span>
+</header>
+<section class="theory-top">
+  <div class="panel theory-panel">
+    <details class="theory-collapse" open>
+      <summary>Transformer foundations &amp; NextAura recipe (click to collapse)</summary>
+      <h2>The Transformer (2017) — in plain English</h2>
+      <p class="theory-prose">The original Transformer is a sequence model that <strong>removes recurrence</strong> (no RNN/LSTM). Instead of reading words one at a time, it processes the <strong>whole sequence in parallel</strong> using <strong>self-attention</strong>: for every token, it builds a weighted blend of all other tokens’ values and learns which words matter most to each other. <strong>Multi-head attention</strong> runs several independent attention patterns at once so the model can capture different kinds of relationships. Because everything is processed at once, word order is injected with fixed <strong>sinusoidal positional encodings</strong>. The stack has encoders (self-attention + feed-forward) and decoders (masked self-attention, cross-attention, feed-forward).</p>
+
+      <h3>Core math</h3>
+      <div class="theory-formulas">
+        <div class="theory-formula">
+          <p class="theory-formula-title">1. Scaled dot-product attention</p>
+          <div class="theory-formula-body">\[ \text{Attention}(Q, K, V) = \text{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right)V \]</div>
+          <p class="theory-formula-note">\(Q, K, V\) = query, key, value matrices. \(d_k\) = key dimension (scaling prevents vanishing gradients).</p>
+        </div>
+        <div class="theory-formula">
+          <p class="theory-formula-title">2. Multi-head attention</p>
+          <div class="theory-formula-body">\[ \text{MultiHead}(Q,K,V)=\text{Concat}(\text{head}_1,\ldots,\text{head}_h)W^O \]</div>
+          <div class="theory-formula-body">\[ \text{where }\ \text{head}_i=\text{Attention}(QW_i^Q,\ KW_i^K,\ VW_i^V) \]</div>
+        </div>
+        <div class="theory-formula">
+          <p class="theory-formula-title">3. Positional encoding (sinusoidal)</p>
+          <div class="theory-formula-body">\[ PE_{(pos,\,2i)}=\sin\!\left(\frac{pos}{10000^{2i/d_{\text{model}}}}\right) \]</div>
+          <div class="theory-formula-body">\[ PE_{(pos,\,2i+1)}=\cos\!\left(\frac{pos}{10000^{2i/d_{\text{model}}}}\right) \]</div>
+        </div>
+        <div class="theory-formula">
+          <p class="theory-formula-title">4. Position-wise feed-forward</p>
+          <div class="theory-formula-body">\[ \text{FFN}(x)=\max(0,\ xW_1+b_1)W_2+b_2 \]</div>
+        </div>
+        <div class="theory-formula">
+          <p class="theory-formula-title">5. Residual + layer norm (post-LN block)</p>
+          <div class="theory-formula-body">\[ \text{Layer}(x)=\text{LayerNorm}\bigl(x+\text{SubLayer}(x)\bigr) \]</div>
+        </div>
+      </div>
+
+      <div class="theory-recipe">
+        <span class="theory-recipe-tag">NextAura novel recipe</span>
+        <h2>From parallel attention to sequential generation</h2>
+        <p class="theory-prose">The vanilla Transformer sees the whole sequence at once. To generate left-to-right, we add a <strong>causal mask</strong> — a “peek-proof shield” on the scores \(QK^\top\): future positions get \(-\infty\), which softmax turns into 0% weight. Token “dog” can look at earlier context but is blocked from “bites” if that word comes later. That forces autoregressive, word-by-word output.</p>
+        <ul class="theory-list">
+          <li><strong>The tradeoff:</strong> parallel training on GPUs is extremely fast; strict one-token-at-a-time recurrence (classic RNN style) is slow.</li>
+          <li><strong>RPT / Huginn-style recurrent depth:</strong> a linear hidden state reads left-to-right, compresses context into a compact memory vector, and passes it forward — human-like sequential reading with modern GPU throughput. Tunable <code>num_steps</code> at test time scales compute without changing weights (<a href="https://huggingface.co/tomg-group-umd/huginn-0125" target="_blank" rel="noopener">Huginn-0125</a>).</li>
+        </ul>
+
+        <h3>Teaching geometry, binary, and language — not just text</h3>
+        <ul class="theory-list">
+          <li><strong>A. Binary / discrete logic:</strong> LLMs live in continuous probabilities (0.83), not CPU bits. We teach discrete reasoning by <strong>tokenizing</strong> the world — grids, voxels, symbol sequences. “2+2=4” is next-token prediction over patterns, not hardware arithmetic.</li>
+          <li><strong>B. Geometry via tokenization:</strong> ViTs chop images into 16×16 patches and treat them like words. 3D uses point clouds or voxels the same way. <strong>RoPE</strong> (Llama 3+) rotates position embeddings so relative spatial moves (e.g. rotate “car” 90°) are encoded in the math.</li>
+          <li><strong>C. World models (Sora, Genie, V-JEPA):</strong> don’t drill geometry with equations alone — force the model to <strong>predict the next video frame</strong>. To survive, it must infer 3D layout, physics, lighting, and motion internally.</li>
+          <li><strong>D. Mixture of Experts + embodied sim:</strong> MoE routes some heads to language, some to 2D pixels, some to 3D math. The deepest lever: let the model write code, run it in Unreal/Unity, watch physics fail, and update weights from what happens on screen — <strong>embodied AI / sim-to-real</strong> (the “GTA 3” path).</li>
+        </ul>
+        <div class="theory-recipe-actions">
+          <button type="button" class="ok" onclick="applyRunPreset('transformer_baseline_51m')">Apply preset: Transformer baseline SFT</button>
+          <button type="button" class="warn" onclick="applyRunPreset('nextaura_novel_51m')">Apply preset: NextAura novel recipe</button>
+        </div>
+      </div>
+    </details>
+  </div>
+</section>
+<section class="workflow-top">
+  <div class="panel run-playbook" id="sectionRunPlaybook">
+    <h2>Run playbook — read top to bottom</h2>
+    <p class="hint" style="margin:0 0 8px">Step 1 is one panel: <strong>mode → stream → architecture</strong>. Presets fill everything in place — tweak, then lock.</p>
+    <div class="playbook-step1-panel" id="playbookStep1Panel">
+      <div class="recipe-template-row">
+        <h3>Recipe templates (from theory above → fills Stage 1)</h3>
+        <div class="playbook-preset-row">
+          <button type="button" class="ok" onclick="applyRunPreset('transformer_baseline_51m')">Transformer baseline — 51M HF SFT (1.1 GB)</button>
+          <button type="button" class="secondary" onclick="applyRunPreset('hf_qwen_finetune')">HF native SFT — Qwen / any causal LM</button>
+          <button type="button" class="warn" onclick="applyRunPreset('nextaura_novel_51m')">NextAura novel — causal + world-model mix</button>
+        </div>
+      </div>
+      <p class="stage4-sub" style="margin-top:0">Other presets</p>
+      <div class="playbook-preset-row">
+        <button type="button" class="secondary" onclick="applyRunPreset('muse_glimmer_sft')">Muse-Glimmer-30B QLoRA SFT v2</button>
+        <button type="button" class="secondary" onclick="applyRunPreset('nemotron_swe_finetune')">360M · Nemotron SWE v3.5 SFT</button>
+        <button type="button" class="secondary" onclick="applyRunPreset('full_sft_51m')">Full 51M SFT finetune (1.1 GB)</button>
+        <button type="button" class="secondary" onclick="applyRunPreset('multimodal_10m')">10M Multimodal smoke (0.08 GB)</button>
+        <button type="button" class="secondary" onclick="applyRunPreset('multimodal_quarter')">10M · 0.25× Chinchilla (~0.2 GB)</button>
+        <button type="button" class="secondary" onclick="applyRunPreset('vjepa_10m')">10M V-JEPA smoke</button>
+        <button type="button" class="secondary" onclick="applyRunPreset('distill_25m')">25M Distill</button>
+        <button type="button" class="secondary" onclick="applyRunPreset('text_mixed')">Text mixed</button>
+        <button type="button" class="secondary" onclick="applyRunPreset('sft_intel')">SFT intelligence</button>
+      </div>
+
+      <div class="theory-recipe" style="margin-top:10px">
+        <span class="theory-recipe-tag">Metamorphic Constraint Field (MCF v2) — app9 slot (ported from app8)</span>
+        <h3 style="font-size:13px;color:#e2e8f0;margin:0 0 8px">The Hierarchical Latent Stack (HLS)</h3>
+        <p class="theory-prose">MCF v1 failed because FineWeb knobs (batch 768, 24 GB byte target) were applied to V-JEPA metadata rows (~50–200 tokens each). That caused ~23 min dead-time per step. MCF v2 bypasses the text tokenizer for latents: raw scalar vectors are packed 128 frames per block, a Global Context Token (GCT) injects physics constraints, and dual-target loss prevents template memorization. Target is <strong>1.5B tokens</strong> (~5.25 GB) for 360M — not the 24 GB byte trap.</p>
+        <div class="theory-formula">
+          <p class="theory-formula-title">1. Latent packing (throughput fix)</p>
+          <div class="theory-formula-body">Block_input = Concat(x₁…xₙ) where Σ len(xᵢ) ≥ block size · N=128 frames · restores GPU utilization</div>
+        </div>
+        <div class="theory-formula">
+          <p class="theory-formula-title">2. Global Context Token (GCT)</p>
+          <div class="theory-formula-body">h_GCT = MLP_phys([gravity, velocity, mass]) · Output = Attention(h_GCT, X_frames)</div>
+        </div>
+        <div class="theory-formula">
+          <p class="theory-formula-title">3. Dual-target loss (anti-memorization)</p>
+          <div class="theory-formula-body">L_MCF = α·L_latent + β·L_scalar · L_scalar = MSE on physical dynamics (velocity, etc.)</div>
+        </div>
+        <div class="theory-formula">
+          <p class="theory-formula-title">4. Continuous physics solver (Stream A braid)</p>
+          <div class="theory-formula-body">dz/dt = f_θ(z,t,x) ⇒ z_{t+1} = z_t + Δt·f_θ(z_t,x_t)</div>
+        </div>
+        <div class="theory-formula">
+          <p class="theory-formula-title">5. Architecture profile (360M)</p>
+          <div class="theory-formula-body">17L×960d×15h · block 256 · FFN 3840 · batch 256 · micro 64 × grad 4 · scalar 12d · grad ckpt · flash bf16</div>
+        </div>
+        <p class="theory-prose"><strong>Plain English tradeoff:</strong> Stop at ~1.5B tokens (Chinchilla ~20 tok/param for 360M). Data: CS2 continuous physics, ego10k manufacturing, sokoban logic. Restart checklist: <code>POST /api/stop</code> → <code>POST /api/checkpoints/reset-session</code> → Start with <code>resume: false</code>. Success: step 10 within 10 min, &gt;50 MB/hr, loss stable-decreasing (not crashing to 0.15).</p>
+        <div class="theory-recipe-actions">
+          <button type="button" class="ok" onclick="applyRunPreset('mcf_recipe_v2_hls')">Apply: MCF v2 HLS — latent packing (1.5B tok · 360M)</button>
+          <button type="button" class="warn" onclick="applyRunPreset('mcf_recipe')">Apply: MCF dual-stream braid (5 GB)</button>
+          <button type="button" class="secondary" onclick="applyRunPreset('mcf_recipe_vjepa')">Apply: MCF Stream A — V-JEPA legacy (24 GB)</button>
+        </div>
+        <p class="hint" id="mcfDatasetHint" style="margin-top:4px">MCF uses V-JEPA or math/code HF streams — never FineWeb.</p>
+      </div>
+
+      <p class="stage4-sub">Step 1 — training mode</p>
+      <div class="playbook-mode-row">
+        <div class="scale-mode-toggle">
+          <button type="button" id="scaleModePretrain" class="scale-mode-btn active" onclick="setScaleMode('pretrain',true)">Pretrain</button>
+          <button type="button" id="scaleModeFinetune" class="scale-mode-btn" onclick="setScaleMode('finetune',true)">Fine-tuning</button>
+        </div>
+        <span id="playbookModeHint" class="hint">Pretrain = HF byte streams (multimodal, V-JEPA, text). Fine-tune = JSONL / SFT / distill.</span>
+      </div>
+
+      <p class="stage4-sub">Data stream</p>
+      <div class="config-section" id="sectionData">
+      <div class="row">
+        <div><label>Data source</label><select id="dataSource" onchange="dataSourceUserSet=true;toggleDataSource();onFormChange();if(typeof markWorkflowStreamPicked==='function')markWorkflowStreamPicked()"><option value="multimodal">Multimodal HF stream</option><option value="vjepa">V-JEPA HF stream</option><option value="mixed">Mixed text (local + HF streams)</option><option value="fable-traces">Fable text stream</option><option value="fineweb">FineWeb text stream</option><option value="sol-traces">GPT-5.6 Sol traces</option><option value="kimi-k3-traces">Kimi K3 traces</option><option value="unsolved-math">UnsolvedMath</option><option value="nemotron-math">Nemotron SFT Math v4</option><option value="nemotron-swe">Nemotron SFT SWE v3.5</option><option value="openassistant-rm">OpenAssistant RM (HH-RLHF)</option><option value="local-corpus-mix">Local curated mix</option><option value="jsonl">Local JSONL only</option><option value="sft-intelligence">SFT intelligence seeds</option><option value="sft-coding">SFT — coding</option><option value="sft-physics">SFT — physics</option><option value="sft-math">SFT — math</option><option value="distill-merged">Distill — merged (coding+physics+math)</option><option value="distill-coding">Distill — coding</option><option value="distill-physics">Distill — physics</option><option value="distill-math">Distill — math</option><option value="distill-live">Distill — live (teachers on-the-fly)</option></select></div>
+        <div id="hfDatasetCell"><label id="hfDatasetLabel">HF dataset (multimodal / V-JEPA)</label><select id="hfDataset" onchange="hfDatasetUserSet=true;onFormChange();if(typeof markWorkflowStreamPicked==='function')markWorkflowStreamPicked()"></select></div>
+        <div><label>Target GB <span id="targetHint" class="tag">Chinchilla</span></label><input id="targetGb" type="number" value="0.08" min="0.001" max="25" step="any" oninput="updateTargetHint();updateChinchillaTable();onFormChange()" /></div>
+      </div>
+      <p class="hint" id="hfProbeHint" style="margin:6px 0 0">HF stream: pick a dataset — verified streams show ✓ in the dropdown.</p>
+      <p class="hint" style="margin:4px 0 0;color:#fbbf24">Byte stop: default <strong>0.08 GB (~80 MB)</strong> is a <em>smoke test</em>. Training stops at Target GB — not a billing limit.</p>
+      </div>
+
+      <div id="sectionTrainConfig">
+      <p class="hint" id="archLockHint">Architecture locked at step &gt; 0 — Reset session to edit.</p>
+
+      <div class="config-section" id="sectionArch">
+      <div class="stage4-sub">Architecture</div>
+      <div class="cfg-grid cols-4">
+        <div class="cfg-cell" data-param="n_layer"><label class="lbl"><label class="toggle-switch"><input type="checkbox" class="param-toggle" data-param="n_layer" checked onchange="toggleParam('n_layer')" /><span class="toggle-slider"></span></label> layers</label><input id="nLayer" type="number" value="8" min="2" max="32" step="1" oninput="archUserSet=true;updateModelEstimate()" /></div>
+        <div class="cfg-cell" data-param="n_embd"><label class="lbl"><label class="toggle-switch"><input type="checkbox" class="param-toggle" data-param="n_embd" checked onchange="toggleParam('n_embd')" /><span class="toggle-slider"></span></label> dim</label><input id="nEmbd" type="number" value="256" min="128" max="2048" step="64" oninput="archUserSet=true;syncFfnDim();updateModelEstimate()" /></div>
+        <div class="cfg-cell" data-param="n_head"><label class="lbl"><label class="toggle-switch"><input type="checkbox" class="param-toggle" data-param="n_head" checked onchange="toggleParam('n_head')" /><span class="toggle-slider"></span></label> heads</label><input id="nHead" type="number" value="8" min="2" max="32" step="1" oninput="archUserSet=true;updateModelEstimate()" /></div>
+        <div class="cfg-cell" data-param="block_size"><label class="lbl"><label class="toggle-switch"><input type="checkbox" class="param-toggle" data-param="block_size" checked onchange="toggleParam('block_size')" /><span class="toggle-slider"></span></label> seq len</label><input id="blockSize" type="number" value="256" min="128" max="2048" step="64" oninput="archUserSet=true;updateModelEstimate()" /></div>
+        <div class="cfg-cell field-off" data-param="ffn_dim"><label class="lbl"><label class="toggle-switch"><input type="checkbox" class="param-toggle" data-param="ffn_dim" onchange="toggleParam('ffn_dim')" /><span class="toggle-slider"></span></label> ffn</label><input id="ffnDim" type="number" value="2048" min="128" max="16384" step="64" disabled oninput="archUserSet=true;updateModelEstimate()" /></div>
+        <div class="cfg-cell field-off" data-param="vocab_size"><label class="lbl"><label class="toggle-switch"><input type="checkbox" class="param-toggle" data-param="vocab_size" onchange="toggleParam('vocab_size')" /><span class="toggle-slider"></span></label> vocab</label><input id="vocabSize" type="number" value="50257" min="1000" max="256000" step="1" disabled oninput="archUserSet=true;updateModelEstimate()" /></div>
+        <div class="cfg-cell" style="grid-column:span 2"><label class="lbl">params</label><input id="modelParams" value="12648960" readonly /><input id="archHint" value="8L × 256d × 8h · block 256 ≈ 12.6M" readonly style="margin-top:4px" /></div>
+      </div>
+      </div>
+
+      <div class="config-section" id="sectionOpt">
+      <div class="stage4-sub">Optimizer</div>
+      <div class="cfg-grid cols-4">
+        <div class="cfg-cell" data-param="learning_rate"><label class="lbl"><label class="toggle-switch"><input type="checkbox" class="param-toggle" data-param="learning_rate" checked onchange="toggleParam('learning_rate')" /><span class="toggle-slider"></span></label> lr</label><input id="learningRate" type="number" value="0.0003" min="0.000001" max="0.01" step="any" oninput="lrUserSet=true;updateRecipeHints();onFormChange()" /></div>
+        <div class="cfg-cell" data-param="batch_size"><label class="lbl"><label class="toggle-switch"><input type="checkbox" class="param-toggle" data-param="batch_size" checked onchange="toggleParam('batch_size')" /><span class="toggle-slider"></span></label> batch</label><input id="batchSize" type="number" value="1024" min="1" max="8192" step="1" oninput="batchUserSet=true;updateModelEstimate();onFormChange()" /></div>
+        <div class="cfg-cell field-off" data-param="dropout"><label class="lbl"><label class="toggle-switch"><input type="checkbox" class="param-toggle" data-param="dropout" onchange="toggleParam('dropout')" /><span class="toggle-slider"></span></label> dropout</label><input id="dropout" type="number" value="0.1" min="0" max="0.5" step="0.05" oninput="onFormChange()" /></div>
+        <div class="cfg-cell field-off" data-param="weight_decay"><label class="lbl"><label class="toggle-switch"><input type="checkbox" class="param-toggle" data-param="weight_decay" onchange="toggleParam('weight_decay')" /><span class="toggle-slider"></span></label> wd</label><input id="weightDecay" type="number" value="0.1" min="0" max="1" step="0.01" disabled oninput="onFormChange()" /></div>
+        <div class="cfg-cell" data-param="micro_batch_size"><label class="lbl"><label class="toggle-switch"><input type="checkbox" class="param-toggle" data-param="micro_batch_size" checked onchange="toggleParam('micro_batch_size')" /><span class="toggle-slider"></span></label> micro</label><input id="microBatchSize" type="number" value="256" min="1" max="512" step="1" oninput="onFormChange()" /></div>
+        <div class="cfg-cell" data-param="grad_accum_steps"><label class="lbl"><label class="toggle-switch"><input type="checkbox" class="param-toggle" data-param="grad_accum_steps" checked onchange="toggleParam('grad_accum_steps')" /><span class="toggle-slider"></span></label> grad accum</label><input id="gradAccumSteps" type="number" value="4" min="1" max="256" step="1" oninput="onFormChange()" /></div>
+        <div class="cfg-cell" data-param="warmup_steps"><label class="lbl"><label class="toggle-switch"><input type="checkbox" class="param-toggle" data-param="warmup_steps" checked onchange="toggleParam('warmup_steps')" /><span class="toggle-slider"></span></label> warmup</label><input id="warmupSteps" type="number" value="500" min="0" max="100000" step="1" oninput="onFormChange()" /></div>
+        <div class="cfg-cell"><label class="lbl">meta</label><input id="trainMeta" value="pending on Start" readonly /></div>
+      </div>
+      </div>
+
+      <div class="config-section" id="sectionCorpus">
+      <div class="stage4-sub">Data mix</div>
+      <div class="cfg-grid cols-4">
+        <div class="cfg-cell" data-param="mix_local_jsonl" id="localMixToggleCell"><label class="lbl"><label class="toggle-switch"><input type="checkbox" class="param-toggle" data-param="mix_local_jsonl" checked onchange="toggleParam('mix_local_jsonl');toggleLocalMix()" /><span class="toggle-slider"></span></label> mix local</label><div class="toggle-row"><label class="toggle-switch"><input type="checkbox" id="mixLocalJsonl" checked onchange="toggleLocalMix();onFormChange()" /><span class="toggle-slider"></span></label><span class="tag">on</span></div></div>
+        <div class="cfg-cell" data-param="jsonl_mix_ratio" id="mixCell"><label class="lbl"><label class="toggle-switch"><input type="checkbox" class="param-toggle" data-param="jsonl_mix_ratio" checked onchange="toggleParam('jsonl_mix_ratio');toggleLocalMix()" /><span class="toggle-slider"></span></label> mix %</label><input id="jsonlMix" type="number" value="30" min="0" max="100" step="5" oninput="onFormChange()" /></div>
+        <div class="cfg-cell" data-param="mix_local_corpora"><label class="lbl"><label class="toggle-switch"><input type="checkbox" class="param-toggle" data-param="mix_local_corpora" checked onchange="toggleParam('mix_local_corpora');toggleLocalCorpus()" /><span class="toggle-slider"></span></label> curated mix</label><div class="toggle-row"><label class="toggle-switch"><input type="checkbox" id="mixLocalCorpora" checked onchange="toggleLocalCorpus();onFormChange()" /><span class="toggle-slider"></span></label><span class="tag">3 files</span></div></div>
+        <div class="cfg-cell" data-param="jsonl_file"><label class="lbl"><label class="toggle-switch"><input type="checkbox" class="param-toggle" data-param="jsonl_file" checked onchange="toggleParam('jsonl_file')" /><span class="toggle-slider"></span></label> corpus</label><select id="jsonlFile" onchange="jsonlFileUserSet=true;onFormChange()"><option value="4563-curated.jsonl">4563-curated.jsonl</option></select></div>
+        <div class="cfg-cell field-off" data-param="epoch_cycles" id="epochCell"><label class="lbl"><label class="toggle-switch"><input type="checkbox" class="param-toggle" data-param="epoch_cycles" onchange="toggleParam('epoch_cycles');toggleEpochCycles()" /><span class="toggle-slider"></span></label> epochs</label><div class="toggle-row"><label class="toggle-switch"><input type="checkbox" id="epochCycles" onchange="toggleEpochCycles();onFormChange()" /><span class="toggle-slider"></span></label><input id="jsonlEpochs" type="number" value="1" min="1" max="500" step="1" disabled oninput="onFormChange()" style="max-width:72px" /></div></div>
+        <div class="cfg-cell field-off" data-param="shuffle_hf_datasets"><label class="lbl"><label class="toggle-switch"><input type="checkbox" class="param-toggle" data-param="shuffle_hf_datasets" onchange="toggleParam('shuffle_hf_datasets')" /><span class="toggle-slider"></span></label> shuffle HF</label><div class="toggle-row"><label class="toggle-switch"><input type="checkbox" id="shuffleHfDatasets" onchange="onFormChange()" /><span class="toggle-slider"></span></label><span class="tag">off=fast</span></div></div>
+      </div>
+      <div class="cfg-cell" data-param="hf_streams" id="hfStreamsRow" style="margin-top:6px">
+        <label class="lbl"><label class="toggle-switch"><input type="checkbox" class="param-toggle" data-param="hf_streams" checked onchange="toggleParam('hf_streams');toggleHfStreams()" /><span class="toggle-slider"></span></label> HF streams <span class="tag">mixed mode</span></label>
+        <p id="hfStreamsHint" style="font-size:10px;color:#64748b;margin:4px 0;display:none">Only active when Data source = Mixed text.</p>
+        <div class="hf-chips">
+          <label class="chip"><input type="checkbox" id="hfStreamFable" checked onchange="onFormChange()" /> fable</label>
+          <label class="chip"><input type="checkbox" id="hfStreamSol" checked onchange="onFormChange()" /> sol</label>
+          <label class="chip"><input type="checkbox" id="hfStreamKimi" checked onchange="onFormChange()" /> kimi</label>
+          <label class="chip"><input type="checkbox" id="hfStreamNemotron" checked onchange="onFormChange()" /> nemotron</label>
+          <label class="chip"><input type="checkbox" id="hfStreamMath" checked onchange="onFormChange()" /> math</label>
+          <label class="chip"><input type="checkbox" id="hfStreamPref" checked onchange="onFormChange()" /> pref</label>
+          <label class="chip"><input type="checkbox" id="hfStreamFineweb" onchange="onFormChange()" /> fineweb</label>
+        </div>
+      </div>
+      </div>
+
+      <div class="config-section" id="sectionAdv">
+      <div class="stage4-sub">Advanced</div>
+      <div class="cfg-grid cols-4">
+        <div class="cfg-cell" data-param="lr_schedule"><label class="lbl"><label class="toggle-switch"><input type="checkbox" class="param-toggle" data-param="lr_schedule" checked onchange="toggleParam('lr_schedule')" /><span class="toggle-slider"></span></label> lr sched</label><select id="lrSchedule" onchange="onFormChange()"><option value="warmup">warmup</option><option value="cosine" selected>cosine</option><option value="constant">constant</option></select></div>
+        <div class="cfg-cell" data-param="total_train_steps"><label class="lbl"><label class="toggle-switch"><input type="checkbox" class="param-toggle" data-param="total_train_steps" checked onchange="toggleParam('total_train_steps')" /><span class="toggle-slider"></span></label> total steps</label><input id="totalTrainSteps" type="number" value="0" min="0" max="10000000" step="100" oninput="onFormChange()" title="0 = bytes-only stop (recommended for smokes)" /></div>
+        <div class="cfg-cell" data-param="mixed_precision"><label class="lbl"><label class="toggle-switch"><input type="checkbox" class="param-toggle" data-param="mixed_precision" checked onchange="toggleParam('mixed_precision')" /><span class="toggle-slider"></span></label> precision</label><select id="mixedPrecision" onchange="onFormChange()"><option value="fp16">fp16</option><option value="bf16" selected>bf16</option><option value="fp32">fp32</option></select></div>
+        <div class="cfg-cell" data-param="save_every_n_steps"><label class="lbl"><label class="toggle-switch"><input type="checkbox" class="param-toggle" data-param="save_every_n_steps" checked onchange="toggleParam('save_every_n_steps')" /><span class="toggle-slider"></span></label> save/n</label><input id="saveEveryN" type="number" value="2000" min="0" max="100000" step="50" oninput="onFormChange()" /></div>
+        <div class="cfg-cell" data-param="use_flash_attention"><label class="lbl"><label class="toggle-switch"><input type="checkbox" class="param-toggle" data-param="use_flash_attention" id="useFlashAttention" checked onchange="toggleParam('use_flash_attention');updateModelEstimate()" /><span class="toggle-slider"></span></label> flash attn</label><span id="flashHint" class="tag">SDPA</span></div>
+        <div class="cfg-cell field-off" data-param="scalar_input_projection"><label class="lbl"><label class="toggle-switch"><input type="checkbox" class="param-toggle" data-param="scalar_input_projection" id="useScalarProjection" onchange="toggleParam('scalar_input_projection');updateModelEstimate()" /><span class="toggle-slider"></span></label> scalar 12d</label><span class="tag">proj</span></div>
+        <div class="cfg-cell field-off" data-param="gradient_checkpointing"><label class="lbl"><label class="toggle-switch"><input type="checkbox" class="param-toggle" data-param="gradient_checkpointing" id="useGradCkpt" onchange="toggleParam('gradient_checkpointing');updateModelEstimate()" /><span class="toggle-slider"></span></label> grad ckpt</label><span class="tag">VRAM</span></div>
+        <div class="cfg-cell" data-param="tokenizer_id"><label class="lbl"><label class="toggle-switch"><input type="checkbox" class="param-toggle" data-param="tokenizer_id" checked onchange="toggleParam('tokenizer_id')" /><span class="toggle-slider"></span></label> tokenizer</label><select id="tokenizerId" onchange="onFormChange()"><option value="gpt2">gpt2 (tiktoken)</option></select></div>
+      </div>
+      </div>
+
+      <div class="playbook-footprint-row">
+        <span class="tag">Footprint</span>
+        <button type="button" class="ok" onclick="applyFootprint10M()">10M floor</button>
+        <button type="button" class="ok" onclick="applyFootprint25M()">25M distill</button>
+        <button type="button" class="secondary" onclick="applyFootprint50M()">50M</button>
+        <button type="button" class="secondary" onclick="pickDataSource('multimodal')">Multimodal</button>
+        <button type="button" class="secondary" onclick="pickDataSource('vjepa')">V-JEPA</button>
+        <button type="button" class="secondary" onclick="pickDataSource('mixed')">Text mixed</button>
+        <button type="button" class="secondary" id="playbookLock1" onclick="lockWorkflowStep(1)">Lock step 1</button>
+      </div>
+      </div><!-- /sectionTrainConfig -->
+    </div><!-- /playbookStep1Panel -->
+
+    <ol class="run-playbook-steps">
+      <li id="playbookStep1" class="wf-active"><strong>Step 1</strong> — mode + stream + architecture in the panel above.<span class="run-playbook-step-hint" id="playbookStep1Hint">Pick a preset or set fields, then Lock step 1.</span></li>
+      <li id="playbookStep2"><strong>Step 2 — Run goal</strong> (panel below): title + intention + byte stop.<span class="run-playbook-step-hint" id="playbookStep2Hint">Fill goal fields, then lock.</span><span class="run-playbook-lock-row"><button type="button" class="secondary" id="playbookLock2" onclick="lockWorkflowStep(2)">Lock step 2</button><button type="button" class="secondary" onclick="document.getElementById('sectionRunGoal').scrollIntoView({behavior:'smooth'})">Jump to goal</button></span></li>
+      <li id="playbookStep3"><strong>Step 3 — Start + terminal</strong>: lock goal, then Start. Watch <code>step N · loss</code> in the log.<span class="run-playbook-step-hint">Unlocks after steps 1–2 are locked.</span></li>
+    </ol>
+    <p class="run-playbook-meta" id="playbookFootprintNote">Active footprint: set with buttons above or Architecture form.</p>
+    <p class="run-playbook-meta">Form data source: <span id="playbookDataSource">—</span> · <span id="playbookFootprintLive">—</span> · <span id="playbookMmCount">—</span> multimodal / <span id="playbookVjepaCount">—</span> V-JEPA verified streams</p>
+    <p class="run-playbook-meta" id="playbookAgentStatus">Autonomous agent: checking…</p>
+    <p id="workflowStatus">Workflow: lock steps top → bottom before Start</p>
+    <div class="run-playbook-log">
+      <strong>How this run advances multimodal / V-JEPA / text:</strong>
+      Multimodal streams caption+text into the same GPT trainer. V-JEPA needs <strong>scalar 12d projection</strong> ON. Text mixed mode interleaves Fable/Sol/etc. Match <em>Target GB</em> to the Chinchilla row for your footprint before Start.
+    </div>
+  </div>
+  <div class="panel run-goal-panel workflow-gated" id="sectionRunGoal">
+    <p class="workflow-gate-banner" id="sectionRunGoalGate">Locked — lock Step 1 config in the playbook above.</p>
+    <h2>Run goal — intention for this session</h2>
+    <p class="hint" style="margin:0 0 8px">Set before <strong>Start</strong>. Progress bars track bytes vs steps; yellow badge = step cap fired before byte target.</p>
+    <div class="run-goal-grid">
+      <div>
+        <label>Goal title</label>
+        <input id="runGoalTitle" type="text" placeholder="What is this run for?" />
+      </div>
+      <div>
+        <label>Agent / operator</label>
+        <input id="runGoalAgent" type="text" placeholder="composer-2.5" />
+      </div>
+    </div>
+    <div style="margin-top:8px">
+      <label>Intention (why, success criteria, next step)</label>
+      <textarea id="runGoalDetail" rows="3" placeholder="e.g. 10M multimodal smoke → confirm stream hits → scale to 50M"></textarea>
+    </div>
+    <div class="run-goal-stop-row">
+      <span>Primary stop:</span>
+      <label><input type="radio" name="runStopPrimary" value="bytes" checked /> Byte target (GB)</label>
+      <label><input type="radio" name="runStopPrimary" value="steps" /> Step cap</label>
+      <label><input type="radio" name="runStopPrimary" value="chinchilla" /> Chinchilla tokens</label>
+    </div>
+    <p class="hint" id="runGoalStopHint" style="margin:6px 0 0"></p>
+    <div class="run-goal-live" id="runGoalLive">
+      <div class="run-goal-live-head">
+        <span class="run-goal-live-title" id="runGoalLiveTitle">—</span>
+        <span class="run-goal-badge idle" id="runGoalOutcomeBadge">idle</span>
+      </div>
+      <p class="run-goal-meta" id="runGoalLiveDetail"></p>
+      <p class="run-goal-meta" id="runGoalLiveAgent"></p>
+      <p class="run-goal-meta" id="runGoalLiveStop">Stop mode: bytes</p>
+      <div class="run-goal-bar-wrap"><div class="run-goal-bar" id="runGoalByteBar"></div></div>
+      <p class="run-goal-meta" id="runGoalByteLabel">Bytes: —</p>
+      <div class="run-goal-bar-wrap"><div class="run-goal-bar warn" id="runGoalStepBar"></div></div>
+      <p class="run-goal-meta" id="runGoalStepLabel">Steps: —</p>
+    </div>
+  </div>
+</section>
+<section class="cheat-sheet-full workflow-gated" id="sectionChinchillaWrap">
+  <p class="workflow-gate-banner" id="chinchillaScalePanelGate" style="margin:12px 24px 0">Locked — lock Step 1 config in the playbook above.</p>
+  <div class="scale-panel" id="chinchillaScalePanel">
+    <div class="scale-head">
+      <h3 id="chinchillaTitle">Chinchilla reference (mode set in Step 1)</h3>
+    </div>
+    <p class="scale-law" id="chinchillaLaw">~20 tokens per parameter · byte budget = tokens × 3.5</p>
+    <div class="scale-tables-grid">
+      <table class="scale-table" id="chinchillaMultTable">
+        <thead><tr><th>Scale (your model)</th><th>Tokens</th><th>GB</th><th>Recommendation</th></tr></thead>
+        <tbody id="chinchillaMultBody"></tbody>
+      </table>
+      <table class="scale-table">
+        <thead><tr><th>Footprint</th><th>Params</th><th>Tokens</th><th>GB</th><th>Recommendation</th></tr></thead>
+        <tbody id="chinchillaFootprintBody"></tbody>
+      </table>
+      <table class="scale-table">
+        <thead><tr><th>Footprint</th><th>Vocab</th><th>Tokenizer</th><th>How to decide</th></tr></thead>
+        <tbody id="tokenizerGuideBody"></tbody>
+      </table>
+    </div>
+    <p class="scale-law" id="tokenizerLaw" style="margin-top:8px"></p>
+    <div class="scale-notes">
+      <div class="scale-target-note" id="chinchillaTargetNote"></div>
+      <div class="scale-target-note" id="chinchillaRecipeNote" style="color:#94a3b8"></div>
+    </div>
+  </div>
+  <div class="scale-panel mm-vjepa-cheat" id="mmVjepaCheatPanel">
+    <div class="scale-head">
+      <h3>Multimodal + V-JEPA recipe cheat sheet</h3>
+      <a href="/mm-vjepa-recipes.txt" class="tag" style="text-decoration:none">plain text</a>
+    </div>
+    <p class="scale-law">One-click presets for HuggingFace multimodal caption streams and V-JEPA latent streams. Apply fills the form below — click <strong>Start</strong> when the Live recipe looks right. V-JEPA recipes turn on <strong>scalar 12d</strong> projection automatically.</p>
+    <div class="mm-vjepa-grid" id="mmVjepaRecipeGrid"></div>
+    <div id="mmVjepaRecipeStatus"></div>
+  </div>
+</section>
+<div class="split">
+<div class="page-main">
+    <div class="panel" id="sectionStage1">
+      <h2>Stage 1 — data tools + checkpoints</h2>
+      <p class="hint">Train config lives in <strong>Step 1</strong> playbook above. Upload JSONL / generate SFT here.</p>
+      <div class="row" id="finewebRow" style="margin-top:10px;display:none">
+        <div><label>Config</label><select id="config"><option value="sample-10BT" selected>sample-10BT</option><option value="sample-100BT">sample-100BT</option><option value="CC-MAIN-2024-10">CC-MAIN-2024-10</option></select></div>
+        <div><label>&nbsp;</label><input value="HuggingFaceFW/fineweb" readonly /></div>
+        <div><label>&nbsp;</label><input value="english filter on" readonly /></div>
+      </div>
+      <div class="row" id="sftGeneratorRow" style="margin-top:10px;display:none;grid-template-columns:1fr auto">
+        <div>
+          <label>SFT topic generator</label>
+          <div class="hf-chips" style="margin-top:6px">
+            <label class="chip"><input type="checkbox" id="sftTopicCoding" checked /> coding</label>
+            <label class="chip"><input type="checkbox" id="sftTopicPhysics" checked /> physics</label>
+            <label class="chip"><input type="checkbox" id="sftTopicMath" checked /> math</label>
+            <label class="chip"><input type="checkbox" id="sftHfAugment" /> HF augment</label>
+          </div>
+          <p class="hint" id="sftTopicStatus" style="margin:6px 0 0">Loading topic status…</p>
+        </div>
+        <div><label>&nbsp;</label><button type="button" class="secondary" id="sftGenerateBtn" onclick="generateSftTopics()">Generate SFT</button></div>
+      </div>
+      <div class="row" id="distillGeneratorRow" style="margin-top:10px;display:none;grid-template-columns:1fr auto">
+        <div>
+          <label>Distill teacher corpus</label>
+          <div class="hf-chips" style="margin-top:6px">
+            <label class="chip"><input type="checkbox" id="distillTopicCoding" checked /> coding</label>
+            <label class="chip"><input type="checkbox" id="distillTopicPhysics" checked /> physics</label>
+            <label class="chip"><input type="checkbox" id="distillTopicMath" checked /> math</label>
+          </div>
+          <p class="hint" id="distillTopicStatus" style="margin:6px 0 0">Loading distill status…</p>
+        </div>
+        <div><label>&nbsp;</label><button type="button" class="ok" id="distillGenerateBtn" onclick="generateDistillTopics()">Generate distill</button></div>
+      </div>
+      <div class="row" id="jsonlUploadRow" style="margin-top:10px;grid-template-columns:1fr auto">
+        <div><label>Upload JSONL</label><input id="dataFile" type="file" accept=".jsonl,application/jsonl" /></div>
+        <div><label>&nbsp;</label><button class="secondary" id="uploadDataBtn" onclick="importDataFile()">Upload data</button></div>
+      </div>
+    </div>
+    <div class="panel config-section history-panel workflow-gated" id="sectionRunHistory">
+      <p class="workflow-gate-banner" id="sectionRunHistoryGate">Locked — complete workflow steps 1–3 above.</p>
+      <h2>Run history</h2>
+      <p class="hint" style="margin:0 0 8px">Auto-logged on complete/stop/import + backfill from disk .pt files. Read before Start.</p>
+      <table class="history-table">
+        <thead><tr><th>Phase</th><th>Checkpoint / data</th><th>Step</th><th>Loss</th><th>RM Δ</th><th>Agent</th><th>Verdict</th><th>Lesson</th></tr></thead>
+        <tbody id="runHistoryBody"><tr><td colspan="8">loading…</td></tr></tbody>
+      </table>
+      <ul class="history-lessons" id="runHistoryLessons"></ul>
+      <div class="hover-context"><strong>Run history.</strong> <strong>keep</strong> = trusted base. <strong>discard</strong> = rolled back or overfit. <strong>noise</strong> = SFT ran but too little data. <strong>floor</strong> = benchmark smoke. Green row = loaded in GPU now.</div>
+    </div>
+    <div class="panel config-section workflow-gated" id="sectionRecipe">
+      <p class="workflow-gate-banner" id="sectionRecipeGate">Locked — complete workflow steps 1–3 above.</p>
+      <h2>Live recipe</h2>
+      <div class="recipe-panel">
+        <div class="recipe-col" id="recipeActive"><h3>Active</h3><div id="recipeActiveBody" class="hint">loading…</div></div>
+        <div class="recipe-col recipe-pending" id="recipePendingCol" style="display:none"><h3>Pending (on Start)</h3><div id="recipePendingBody" class="hint"></div></div>
+      </div>
+      <div class="hover-context"><strong>Recipe.</strong> <strong>Active</strong> reflects the loaded checkpoint + current run from <code>/api/status</code>. <strong>Pending</strong> appears when form edits differ — gold lines change on Start. <strong>Forward pass</strong> = one model forward. <strong>Gradient accumulation</strong> = multiple forwards before one optimizer update. <strong>Training step</strong> = one weight update.</div>
+    </div>
+    <div id="sectionTrainControls" class="workflow-gated">
+    <p class="workflow-gate-banner" id="sectionTrainControlsGate">Locked — complete workflow steps 1–3 above.</p>
+    <div id="stats">loading…</div>
+    <p class="hint" id="runCompleteBanner" style="display:none;margin:8px 0;color:#fbbf24"></p>
+    <div id="progressBar"><div id="progressFill"></div></div>
+    <button class="ok" id="startBtn" onclick="startStream(false)">Start</button>
+    <button class="warn" id="resumeBtn" onclick="startStream(true)" disabled>Resume</button>
+    <button class="secondary" onclick="togglePause()">Pause</button>
+    <button class="danger" onclick="stopStream()">Stop</button>
+    <button class="secondary" id="exportBtn" onclick="exportCheckpoint()" disabled title="Export in-memory / loaded checkpoint">Download live weights</button>
+    </div>
+    <div class="panel" style="margin-top:12px" id="sectionCheckpoint">
+      <h2>Checkpoint</h2>
+      <div class="config-section" id="sectionCkpt">
+      <div class="row" style="grid-template-columns:1fr auto auto">
+        <div><label>Upload .pt</label><input id="ckptFile" type="file" accept=".pt,application/octet-stream" /></div>
+        <div><label>&nbsp;</label><button class="secondary" id="loadCkptBtn" onclick="importCheckpoint()">Upload &amp; load</button></div>
+        <div><label>Saved on server</label><select id="ckptSaved"><option value="">—</option></select></div>
+      </div>
+      <button class="secondary" id="loadSavedBtn" onclick="loadSavedCheckpoint()">Load saved</button>
+      <button class="secondary" id="downloadSavedBtn" onclick="downloadSavedCheckpoint()">Download saved</button>
+      <button class="danger" id="deleteCkptBtn" onclick="deleteSelectedCheckpoint()">Delete selected</button>
+      <button class="warn" id="clearOldCkptBtn" onclick="clearOldCheckpoints()">Clear old</button>
+      <button class="secondary" id="resetSessionBtn" onclick="resetTrainingSession()">Reset session</button>
+      <div class="row" style="margin-top:10px;grid-template-columns:1fr auto">
+        <div><label>Import HuggingFace causal LM</label><input id="hfRepoId" value="Qwen/Qwen2.5-3B-Instruct" placeholder="Qwen/Qwen2.5-3B-Instruct or local path" /></div>
+        <div><label>&nbsp;</label><button class="secondary" id="importHfBtn" onclick="importHfCheckpoint()">Import &amp; load</button></div>
+      </div>
+      <p class="hint">Native HF import (Qwen, Llama, Mistral, …) — not GPT-2 weight mapping. Legacy GPT-2 map: pass <code>backend: "gpt2_map"</code> in API.</p>
+      <p class="hint" id="ckptStatus">No checkpoint loaded.</p>
+      <p class="hint" id="ckptDisk">—</p>
+      <div class="hover-context"><strong>Checkpoints.</strong> This panel is always available — no workflow lock. <strong>Download saved</strong> pulls any .pt from the dropdown. <strong>Download live weights</strong> exports GPU/in-memory weights (needs train step &gt; 0). Cannot delete the <strong>loaded</strong> checkpoint — use <strong>Reset session</strong> first.</div>
+      </div>
+    </div>
+    <h2>Terminal</h2>
+    <div class="gpu-vram-live" id="gpuVramLive">
+      <div class="gpu-vram-head">
+        <span class="gpu-vram-title">GPU VRAM — current training</span>
+        <span class="gpu-vram-badge idle" id="gpuVramBadge">idle</span>
+      </div>
+      <div class="run-goal-bar-wrap"><div class="run-goal-bar gpu-vram-bar" id="gpuVramBar"></div></div>
+      <p class="run-goal-meta" id="gpuVramLabel">VRAM: —</p>
+    </div>
+    <div id="mirror"></div>
+</div>
+</div>
+<section class="eval-panel" style="padding:18px 24px;border-top:1px solid #1f2937;background:#080a10">
+  <div class="panel">
+    <h2>Eval — reward model (preference score)</h2>
+    <p class="hint" id="evalTeachersRef">Loading teacher status…</p>
+    <p class="hint" id="evalLiveStatus">—</p>
+    <p class="hint">RM scores how much OpenAssistant&apos;s preference model likes an answer vs the prompt — higher is better for chat quality, not ground truth. After each checkpoint save we auto-score benchmark prompts. Use <strong>Compare checkpoints</strong> to pick the best .pt. RL / DPO is not wired here yet — RM is the progress signal.</p>
+    <div class="row" style="grid-template-columns:1fr auto;margin:12px 0;gap:8px;align-items:end">
+      <div><label>Compare checkpoints (space-separated .pt names)</label><input id="evalCompareList" placeholder="nextaura-51m-step4000.pt nextaura-51m-step4500.pt" /></div>
+      <button type="button" class="secondary" id="evalCompareBtn" onclick="compareSelectedCheckpoints()">Compare checkpoints (RM)</button>
+    </div>
+    <table style="width:100%;font-size:12px;border-collapse:collapse;margin-top:8px">
+      <thead><tr style="color:#94a3b8;text-align:left"><th>Checkpoint</th><th>RM mean</th><th>Δ vs best</th><th>When</th></tr></thead>
+      <tbody id="evalLeaderboardBody"><tr><td colspan="4" class="hint">—</td></tr></tbody>
+    </table>
+  </div>
+</section>
+<section class="infer-bottom">
+  <div class="panel">
+    <h2 id="inferStageTitle">Stage 2 — inference</h2>
+    <p class="hint" id="inferSectionHint" style="margin:0 0 8px">Loading model context for inference guidance…</p>
+    <div class="infer-context-panel" id="inferContextPanel">
+      <div class="infer-ctx-grid" id="inferCtxGrid"><span class="hint">Loading training context…</span></div>
+      <div class="infer-prompt-chips" id="inferPromptChips"></div>
+    </div>
+    <div class="infer-layout">
+      <div>
+        <p class="hint" id="inferReady">Checking current training checkpoint…</p>
+        <textarea id="inferQ" rows="5" placeholder="CI fails: test_delete_stream — AttributeError stream not found in aws.rb.storage. List 3 files to inspect, grep patterns, and one fix hypothesis."></textarea>
+        <div class="config-section infer-deep" id="sectionInferSampling">
+        <p class="stage4-sub" style="margin-top:10px">Sampling (inference only)</p>
+        <div class="row" style="grid-template-columns:1fr 1fr 1fr;margin-top:4px">
+          <div class="config-section infer-deep" id="inferMaxTokensCell">
+            <label>Max tokens <span class="tag" id="inferMaxTokensHint">cap</span></label>
+            <input id="inferTokens" type="number" value="180" min="16" max="512" />
+            <div class="hover-context" id="inferCheatMaxTokens"><span class="hint">Load a checkpoint — max-token guidance will match its block size and param count.</span></div>
+          </div>
+          <div class="config-section infer-deep" id="inferTempCell">
+            <label>Temperature</label>
+            <input id="inferTemp" type="number" value="0.35" min="0.05" max="1.5" step="0.05" />
+            <div class="hover-context" id="inferCheatTemp"><span class="hint">Load a checkpoint — temperature bands will match the current training stream.</span></div>
+          </div>
+          <div class="config-section infer-deep" id="repPenaltyCell">
+            <label>Repetition penalty</label>
+            <div class="toggle-row">
+              <label class="toggle-switch" title="Penalize tokens already seen in prompt + answer"><input type="checkbox" id="useRepetitionPenalty" checked onchange="toggleRepetitionPenalty()" /><span class="toggle-slider"></span></label>
+              <input id="inferRepPenalty" type="number" value="1.15" min="1.0" max="2.0" step="0.05" />
+            </div>
+            <div class="hover-context" id="inferCheatRepPenalty"><span class="hint">Load a checkpoint — repetition-penalty guidance will match the current run mode.</span></div>
+          </div>
+        </div>
+        </div>
+        <div class="config-section infer-deep" id="sectionInferRm" style="margin-top:10px">
+        <p class="stage4-sub">Reward modeling — how we know it&apos;s improving</p>
+        <p class="hint" id="inferRmLive" style="margin:4px 0 8px">RM: —</p>
+        <div class="row" style="grid-template-columns:1fr auto auto;gap:8px;align-items:end">
+          <p class="hint" id="inferRmSummary" style="margin:0">Training signal and RM eval update when a checkpoint loads.</p>
+          <button type="button" class="secondary" id="inferRmPanelBtn" onclick="window.runInferRmPanel()">RM panel (20 prompts)</button>
+        </div>
+        <div class="hover-context" id="inferCheatRm"><span class="hint">Load a checkpoint — reward-model guidance will match the current stream and param count.</span></div>
+        </div>
+        <button class="ok" id="inferAskBtn" onclick="inferAsk()">Ask</button>
+        <button class="secondary" id="inferScoreBtn" onclick="window.scoreLastAnswer()" disabled>Score last answer (RM)</button>
+        <button class="secondary" onclick="inferClear()">Clear</button>
+        <div id="inferError" class="hint" style="color:#f87171;display:none;margin-top:8px"></div>
+      </div>
+      <div id="inferChat"></div>
+    </div>
+  </div>
+</section>
+<footer class="changelog-footer" id="sectionChangelog">
+  <div class="panel">
+    <h2>Changelog — git history</h2>
+    <p class="changelog-meta" id="changelogMeta">loading…</p>
+    <div id="changelogBody"><p class="hint">loading…</p></div>
+  </div>
+</footer>
+<script src="/static/recipe-cheatsheet.js?v=2"></script>
+<script src="/static/run-playbook.js?v=10"></script>
+<script src="/static/run-workflow.js?v=9"></script>
+<script src="/static/run-goal.js?v=2"></script>
+<script src="/static/sft-generate.js?v=2"></script>
+<script src="/static/distill-generate.js?v=1"></script>
+<script src="/static/infer.js?v=12"></script>
+<script src="/static/eval-panel.js?v=2"></script>
+<script>
+let pollTimer=null,logOffset=0,booted=false,lrUserSet=false,batchUserSet=false,archUserSet=false,dataSourceUserSet=false,jsonlFileUserSet=false,hfDatasetUserSet=false,lastActiveSnapshot=null,multimodalDatasets=[],vjepaDatasets=[];
+window.CORPUS_MIX_LABEL='2400+4563-curated+extract';
+const PARAM_INPUTS={n_embd:'nEmbd',n_layer:'nLayer',n_head:'nHead',block_size:'blockSize',ffn_dim:'ffnDim',vocab_size:'vocabSize',dropout:'dropout',learning_rate:'learningRate',batch_size:'batchSize',grad_accum_steps:'gradAccumSteps',micro_batch_size:'microBatchSize',warmup_steps:'warmupSteps',weight_decay:'weightDecay',mixed_precision:'mixedPrecision',save_every_n_steps:'saveEveryN',lr_schedule:'lrSchedule',total_train_steps:'totalTrainSteps',jsonl_mix_ratio:'jsonlMix'};
+window.lastInferQ='';window.lastInferA='';
+function line(msg,c){const m=document.getElementById('mirror'),e=document.createElement('div');e.className='line-'+(c||'white');e.textContent=msg;m.appendChild(e);m.scrollTop=m.scrollHeight;}
+function isParamOn(key){const el=document.querySelector('.param-toggle[data-param="'+key+'"]');return el?!!el.checked:true;}
+function toggleParam(key){const on=isParamOn(key);const row=document.querySelector('.cfg-cell[data-param="'+key+'"]')||document.querySelector('.param-row[data-param="'+key+'"]');if(row)row.classList.toggle('field-off',!on);const inpId=PARAM_INPUTS[key];if(inpId){const inp=document.getElementById(inpId);if(inp&&key!=='mixed_precision'&&key!=='jsonl_mix_ratio')inp.disabled=!on;}if(key==='grad_accum_steps'||key==='micro_batch_size'||key==='warmup_steps'||key==='weight_decay'||key==='save_every_n_steps'||key==='mixed_precision'||key==='ffn_dim'||key==='vocab_size'||key==='lr_schedule'||key==='total_train_steps'){const inp=document.getElementById(PARAM_INPUTS[key]);if(inp)inp.disabled=!on;}if(key==='ffn_dim'&&!on)syncFfnDim();if(key==='shuffle_hf_datasets'){const sh=document.getElementById('shuffleHfDatasets');if(sh)sh.disabled=!on||!!(lastActiveSnapshot&&lastActiveSnapshot.running);}if(key==='mix_local_corpora')toggleLocalCorpus();if(key==='epoch_cycles'){const ec=document.getElementById('epochCycles');if(ec)ec.disabled=!on||!!(lastActiveSnapshot&&lastActiveSnapshot.running);toggleEpochCycles();}if(key==='mix_local_jsonl'||key==='jsonl_mix_ratio')toggleLocalMix();if(key==='jsonl_file'){const sel=document.getElementById('jsonlFile');if(sel)sel.disabled=!on||!!(lastActiveSnapshot&&lastActiveSnapshot.running);}if(key==='hf_streams')toggleHfStreams();onFormChange();}
+function syncFfnDim(){const d=Number(document.getElementById('nEmbd').value||512);const f=document.getElementById('ffnDim');if(f&&!isParamOn('ffn_dim'))f.value=String(d*4);}
+function applyPayload(){return{n_layer:isParamOn('n_layer'),n_head:isParamOn('n_head'),n_embd:isParamOn('n_embd'),block_size:isParamOn('block_size'),ffn_dim:isParamOn('ffn_dim'),vocab_size:isParamOn('vocab_size'),dropout:isParamOn('dropout'),learning_rate:isParamOn('learning_rate'),batch_size:isParamOn('batch_size'),micro_batch_size:isParamOn('micro_batch_size'),grad_accum_steps:isParamOn('grad_accum_steps'),weight_decay:isParamOn('weight_decay'),warmup_steps:isParamOn('warmup_steps'),mixed_precision:isParamOn('mixed_precision'),save_every_n_steps:isParamOn('save_every_n_steps'),lr_schedule:isParamOn('lr_schedule'),total_train_steps:isParamOn('total_train_steps'),use_flash_attention:isParamOn('use_flash_attention'),scalar_input_projection:isParamOn('scalar_input_projection'),gradient_checkpointing:isParamOn('gradient_checkpointing'),epoch_cycles:isParamOn('epoch_cycles'),mix_local_jsonl:isParamOn('mix_local_jsonl'),jsonl_mix_ratio:isParamOn('jsonl_mix_ratio'),shuffle_hf_datasets:isParamOn('shuffle_hf_datasets'),mix_local_corpora:isParamOn('mix_local_corpora'),jsonl_file:isParamOn('jsonl_file'),hf_streams:isParamOn('hf_streams'),tokenizer_id:isParamOn('tokenizer_id'),hf_dataset_id:isParamOn('hf_dataset_id'),target_gb:true};}
+function populateHfDatasetOptions(ds){const sel=document.getElementById('hfDataset');if(!sel)return;const cur=sel.value;const all=ds==='vjepa'?vjepaDatasets:multimodalDatasets;const verified=ds==='vjepa'?(window.vjepaDatasetsVerified||[]):(window.multimodalDatasetsVerified||[]);const list=verified.length?verified:all;const probe=window.hfProbeStatus||{};sel.innerHTML='';list.forEach(id=>{const o=document.createElement('option');o.value=id;const p=probe[id];o.textContent=p&&p.ok?id+' ✓':id;sel.appendChild(o);});if(cur&&list.includes(cur))sel.value=cur;else if(list.length)sel.value=list[0];if(typeof updateHfProbeHint==='function')updateHfProbeHint();}
+function hfStreamFlags(){return{fable:!!(document.getElementById('hfStreamFable')||{}).checked,sol:!!(document.getElementById('hfStreamSol')||{}).checked,kimi:!!(document.getElementById('hfStreamKimi')||{}).checked,nemotron:!!(document.getElementById('hfStreamNemotron')||{}).checked,math:!!(document.getElementById('hfStreamMath')||{}).checked,pref:!!(document.getElementById('hfStreamPref')||{}).checked,fineweb:!!(document.getElementById('hfStreamFineweb')||{}).checked};}
+function hfStreamLabel(flags){if(!flags)return '';const names=[];if(flags.fable)names.push('fable');if(flags.sol)names.push('sol');if(flags.kimi)names.push('kimi');if(flags.nemotron)names.push('nemotron');if(flags.math)names.push('math');if(flags.pref)names.push('pref');if(flags.fineweb)names.push('fineweb');return names.length?'HF ['+names.join('+')+']':'HF off';}
+function toggleHfStreams(){const mixed=(document.getElementById('dataSource')||{}).value==='mixed';const applyOn=isParamOn('hf_streams');const running=!!(lastActiveSnapshot&&lastActiveSnapshot.running);const dis=!mixed||!applyOn||running;['hfStreamFable','hfStreamSol','hfStreamKimi','hfStreamNemotron','hfStreamMath','hfStreamPref','hfStreamFineweb'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=dis;});const row=document.getElementById('hfStreamsRow');if(row)row.classList.toggle('field-off',!mixed||!applyOn);const hint=document.getElementById('hfStreamsHint');if(hint)hint.style.display=!mixed?'block':'none';}
+function archExtras(){return{vocab_size:Number(document.getElementById('vocabSize').value||50257),ffn_dim:isParamOn('ffn_dim')?Number(document.getElementById('ffnDim').value||2048):null,use_flash_attention:!!(document.getElementById('useFlashAttention')||{}).checked&&isParamOn('use_flash_attention'),scalar_input_projection:!!(document.getElementById('useScalarProjection')||{}).checked&&isParamOn('scalar_input_projection'),gradient_checkpointing:!!(document.getElementById('useGradCkpt')||{}).checked&&isParamOn('gradient_checkpointing')};}
+function archPayload(){return{n_layer:Number(document.getElementById('nLayer').value||8),n_head:Number(document.getElementById('nHead').value||8),n_embd:Number(document.getElementById('nEmbd').value||256),block_size:Number(document.getElementById('blockSize').value||256)};}
+function fmtTargetLabel(t){if(t>0&&t<1)return(t*1024).toFixed(1)+' MB';return(t||3.33)+' GB';}
+function fmtTok(n){if(n>=1e9)return(n/1e9).toFixed(2)+'B';if(n>=1e6)return(n/1e6).toFixed(2)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return String(n);}
+function fmtGbCell(gb){if(gb<0.001)return(gb*1024*1024).toFixed(0)+' B';if(gb<1)return(gb*1024).toFixed(1)+' MB';return gb.toFixed(3)+' GB';}
+let lastChinchilla=null;
+let scaleMode='pretrain';
+let scaleModeUserSet=false;
+function setScaleMode(mode,fromUser){if(fromUser)scaleModeUserSet=true;scaleMode=mode==='finetune'?'finetune':'pretrain';try{localStorage.setItem('scaleMode',scaleMode);}catch(e){}const pre=document.getElementById('scaleModePretrain');const fin=document.getElementById('scaleModeFinetune');if(pre)pre.classList.toggle('active',scaleMode==='pretrain');if(fin)fin.classList.toggle('active',scaleMode==='finetune');const badge=document.getElementById('trainModeBadge');if(badge){badge.textContent=scaleMode==='finetune'?'Fine-tuning':'Pretraining';badge.className='badge '+(scaleMode==='finetune'?'finetune':'pretrain');}const hint=document.getElementById('playbookModeHint');if(hint)hint.textContent=scaleMode==='finetune'?'Fine-tuning: JSONL / SFT / distill — lower LR, epoch cycles.' :'Pretrain: HF byte streams (multimodal, V-JEPA, text mixed).';if(fromUser&&scaleMode==='finetune'){const ds=(document.getElementById('dataSource')||{}).value;if(ds==='multimodal'||ds==='vjepa'||ds==='mixed'||ds==='fineweb'||ds==='fable-traces'){if(typeof pickDataSource==='function')pickDataSource('sft-intelligence',true);}}if(typeof renderRunWorkflow==='function')renderRunWorkflow();updateModelEstimate();updateTargetHint();}
+function activeScaleBundle(scale){if(!scale)return null;if(scale.modes&&scale.modes[scaleMode])return scale.modes[scaleMode];return{title:scaleMode==='finetune'?'Fine-tuning budget':'Pretrain scaling',law:scale.law,multipliers:scale.multipliers,footprints:scale.footprints,reference_mult:scaleMode==='finetune'?0.1:1,reference_label:scaleMode==='finetune'?'0.1× standard SFT':'1× Chinchilla optimal'};}
+function recipeHints(){const ds=(document.getElementById('dataSource')||{}).value;const lr=Number(document.getElementById('learningRate').value||0.0003);const ep=epochPayload();const mode=scaleMode==='finetune'?'fine-tuning':'pretrain';const stop=ep.epoch_cycles?'epoch cycles ×'+ep.epochs+' (JSONL only — can finish before Target GB)':'epoch cycles off — stop at Target GB';return{lrNow:lr.toExponential(2),epochHint:stop,mode};}
+function updateRecipeHints(){const h=recipeHints();const el=document.getElementById('chinchillaRecipeNote');if(!el)return;let tok='';if(lastChinchilla&&lastChinchilla.tokenizer&&lastChinchilla.tokenizer.recommendation){const r=lastChinchilla.tokenizer.recommendation;tok=' · tok '+r.tokenizer_label+' (vocab '+(r.vocab_size||'?')+', embed '+r.embed_pct+'%)';if(r.warning)tok+=' · ⚠ '+r.warning;}el.textContent='Your '+h.mode+' recipe: lr '+h.lrNow+' · '+h.epochHint+' · Target GB = your stop cap'+tok;}
+function renderTokenizerGuide(scale){const tok=scale&&scale.tokenizer;if(!tok)return;const law=document.getElementById('tokenizerLaw');if(law)law.textContent=tok.law||'';const body=document.getElementById('tokenizerGuideBody');if(!body)return;body.innerHTML=(tok.rows||[]).map(row=>{const cls=row.active?'row-current row-footprint':'';const vocab=row.display_vocab!=null?row.display_vocab:(row.vocab_size||'—');const embed=row.embed_pct!=null?' · embed '+row.embed_pct+'%':'';return '<tr class="'+cls+'"><td>'+row.footprint_label+'</td><td>'+vocab+embed+'</td><td>'+row.tokenizer_label+'</td><td class="scale-rec">'+(row.rule||'')+'</td></tr>';}).join('');}
+function renderChinchillaTable(scale){if(!scale)return;lastChinchilla=scale;const bundle=activeScaleBundle(scale);const title=document.getElementById('chinchillaTitle');if(title&&bundle)title.textContent=bundle.title||'Scaling';const law=document.getElementById('chinchillaLaw');if(law&&bundle)law.textContent=(bundle.law||scale.law||'')+' · byte budget = tokens × '+(scale.bytes_per_token||3.5);const targetGb=Number(document.getElementById('targetGb').value||0);const multBody=document.getElementById('chinchillaMultBody');if(multBody&&bundle){multBody.innerHTML=(bundle.multipliers||[]).map(row=>{const isRef=Math.abs((row.mult||0)-(bundle.reference_mult||1))<0.001;const isTarget=targetGb>0&&Math.abs(row.gb-targetGb)<Math.max(0.002,targetGb*0.02);const cls=isTarget?'row-target':(isRef?'row-current':'');const rec=row.recommendation||'';return '<tr class="'+cls+'"><td>'+row.label+'</td><td>'+fmtTok(row.tokens)+'</td><td>'+fmtGbCell(row.gb)+'</td><td class="scale-rec">'+rec+'</td></tr>';}).join('');}const fpBody=document.getElementById('chinchillaFootprintBody');if(fpBody&&bundle){const cur=scale.model_params||0;fpBody.innerHTML=(bundle.footprints||[]).map(row=>{const near=cur&&Math.abs(row.params-cur)/cur<0.08;const cls=near?'row-current row-footprint':'row-footprint';const rec=row.recommendation||'';return '<tr class="'+cls+'"><td>'+row.label+'</td><td>'+(row.params/1e6).toFixed(1)+'M</td><td>'+fmtTok(row.tokens)+'</td><td>'+fmtGbCell(row.gb)+'</td><td class="scale-rec">'+rec+'</td></tr>';}).join('');}renderTokenizerGuide(scale);const note=document.getElementById('chinchillaTargetNote');if(note&&bundle){if(targetGb<=0)note.textContent='';else{const refRow=(bundle.multipliers||[]).find(r=>Math.abs((r.mult||0)-(bundle.reference_mult||1))<0.001);const refGb=refRow?refRow.gb:(scale.optimal_gb||0);const ratio=refGb>0?(targetGb/refGb):0;const tok=Math.round((scale.optimal_tokens||0)*(refRow?refRow.mult:1)*ratio);note.textContent='Target '+fmtGbCell(targetGb)+' ≈ '+ratio.toFixed(2)+'× '+(bundle.reference_label||'reference')+' · ~'+fmtTok(tok)+' tokens';}}updateRecipeHints();}
+function updateChinchillaTable(){if(lastChinchilla)renderChinchillaTable(lastChinchilla);else updateRecipeHints();}
+function updateTargetHint(){const params=Number(document.getElementById('modelParams').value||12648960);const targetGb=Number(document.getElementById('targetGb').value||0);const el=document.getElementById('targetHint');if(!el)return;const optimal=(params*20*3.5)/(1024**3);const refMult=scaleMode==='finetune'?0.1:1;const refGb=optimal*refMult;const refLabel=scaleMode==='finetune'?'0.1× SFT':'1× optimal';if(!targetGb||targetGb<=0){el.textContent=refLabel+' · '+fmtGbCell(refGb);return;}const ratio=refGb>0?targetGb/refGb:0;if(Math.abs(ratio-1)<0.05)el.textContent='≈ '+refLabel+' · '+fmtGbCell(targetGb)+' stop';else if(ratio<1)el.textContent='your stop · '+fmtGbCell(targetGb)+' ('+ratio.toFixed(2)+'× '+refLabel+')';else el.textContent='your stop · '+fmtGbCell(targetGb)+' ('+ratio.toFixed(1)+'× '+refLabel+' · ref '+fmtGbCell(refGb)+')';}
+function isSftTopic(ds){return ds==='sft-coding'||ds==='sft-physics'||ds==='sft-math';}
+function isDistillSource(ds){return ds==='distill-merged'||ds==='distill-live'||ds==='distill-coding'||ds==='distill-physics'||ds==='distill-math';}
+function isDistillTopic(ds){return ds==='distill-coding'||ds==='distill-physics'||ds==='distill-math';}
+function isSftFinetune(ds){return ds==='sft-intelligence'||isSftTopic(ds)||isDistillSource(ds);}
+function isJsonlOnly(){const ds=(document.getElementById('dataSource')||{}).value;return ds==='jsonl'||ds==='local-corpus-mix'||isSftFinetune(ds);}
+function applyFlag(paramKey,elId){return isParamOn(paramKey)&&!!(document.getElementById(elId)||{}).checked;}
+function localCorpusLabel(b){if(!b)return '?';if(b.data_source==='sft-intelligence')return b.jsonl_file||'sft-full-merged.jsonl';if(b.data_source==='distill-merged')return b.jsonl_file||'distill-merged.jsonl';if(isDistillTopic(b.data_source))return b.jsonl_file||('distill-'+b.data_source.replace('distill-','')+'.jsonl');if(isSftTopic(b.data_source))return b.jsonl_file||('sft-'+b.data_source.replace('sft-','')+'.jsonl');const mix=b.apply?b.apply.mix_local_corpora&&b.mix_local_corpora:b.mix_local_corpora;if(mix||(b.data_source==='local-corpus-mix'))return b.local_corpus_mix_label||window.CORPUS_MIX_LABEL||'curated mix';return b.jsonl_file||'?';}
+function localCorpusLabelFromForm(){if(applyFlag('mix_local_corpora','mixLocalCorpora')||(document.getElementById('dataSource')||{}).value==='local-corpus-mix')return window.CORPUS_MIX_LABEL||'curated mix';return (document.getElementById('jsonlFile')||{}).value||'?';}
+function toggleLocalCorpus(){const mixOn=isParamOn('mix_local_corpora');const on=mixOn&&!!(document.getElementById('mixLocalCorpora')||{}).checked;const sel=document.getElementById('jsonlFile');if(sel)sel.disabled=on||!!(lastActiveSnapshot&&lastActiveSnapshot.running);const row=document.querySelector('.cfg-cell[data-param="jsonl_file"]');if(row)row.classList.toggle('field-off',on);}
+function toggleLocalMix(){const jsonlOnly=isJsonlOnly();const ratioOn=isParamOn('jsonl_mix_ratio');const mixOn=isParamOn('mix_local_jsonl');const running=!!(lastActiveSnapshot&&lastActiveSnapshot.running);const mix=document.getElementById('jsonlMix');if(mix)mix.disabled=jsonlOnly||!ratioOn||running;const toggleCell=document.getElementById('localMixToggleCell');if(toggleCell)toggleCell.classList.toggle('field-off',jsonlOnly||!mixOn);}
+function toggleEpochCycles(){const applyOn=isParamOn('epoch_cycles');const on=applyOn&&!!(document.getElementById('epochCycles')||{}).checked;const inp=document.getElementById('jsonlEpochs');if(inp){inp.disabled=!on;if(!on)inp.value=1;}const cell=document.getElementById('epochCell');if(cell)cell.classList.toggle('field-off',!on);updateRecipeHints();}
+function epochPayload(){const applyEc=isParamOn('epoch_cycles');const on=applyEc&&!!(document.getElementById('epochCycles')||{}).checked;return{epoch_cycles:on,epochs:on?Number(document.getElementById('jsonlEpochs').value||1):1};}
+function bodyPayload(){const ds=document.getElementById('dataSource').value;const arch=archPayload();const ex=archExtras();const ep=epochPayload();const jsonlOnly=ds==='jsonl'||isSftFinetune(ds);const gaOn=isParamOn('grad_accum_steps');const mbOn=isParamOn('micro_batch_size');const hf=hfStreamFlags();const hfOn=isParamOn('hf_streams');const tokOn=isParamOn('tokenizer_id');const dsOn=isParamOn('hf_dataset_id');return{config:document.getElementById('config').value,target_gb:Number(document.getElementById('targetGb').value||0.08),model_params:Number(document.getElementById('modelParams').value||12648960),learning_rate:Number(document.getElementById('learningRate').value||0.0003),batch_size:Number(document.getElementById('batchSize').value||1024),dropout:Number(document.getElementById('dropout').value||0.1),weight_decay:Number(document.getElementById('weightDecay').value||0.1),warmup_steps:Number(document.getElementById('warmupSteps').value||500),mixed_precision:(document.getElementById('mixedPrecision')||{}).value||'bf16',save_every_n_steps:Number(document.getElementById('saveEveryN').value||2000),lr_schedule:(document.getElementById('lrSchedule')||{}).value||'cosine',total_train_steps:Number(document.getElementById('totalTrainSteps').value||3899),micro_batch_size:mbOn?Number(document.getElementById('microBatchSize').value||256):null,grad_accum_steps:gaOn?Number(document.getElementById('gradAccumSteps').value||4):null,data_source:ds,hf_dataset_id:dsOn?(document.getElementById('hfDataset')||{}).value||'':undefined,tokenizer_id:tokOn?(document.getElementById('tokenizerId')||{}).value||'gpt2':'gpt2',jsonl_file:document.getElementById('jsonlFile').value||'4563-curated.jsonl',epochs:ep.epochs,epoch_cycles:ep.epoch_cycles,mix_local_jsonl:!jsonlOnly&&applyFlag('mix_local_jsonl','mixLocalJsonl'),jsonl_mix_ratio:Number(document.getElementById('jsonlMix').value||30)/100,shuffle_hf_datasets:applyFlag('shuffle_hf_datasets','shuffleHfDatasets'),mix_local_corpora:applyFlag('mix_local_corpora','mixLocalCorpora')||ds==='local-corpus-mix',hf_stream_fable:hfOn&&hf.fable,hf_stream_sol:hfOn&&hf.sol,hf_stream_kimi:hfOn&&hf.kimi,hf_stream_nemotron:hfOn&&hf.nemotron,hf_stream_unsolved_math:hfOn&&hf.math,hf_stream_preference:hfOn&&hf.pref,hf_stream_fineweb:hfOn&&hf.fineweb,english_only:true,min_token_count:32,n_layer:arch.n_layer,n_head:arch.n_head,n_embd:arch.n_embd,block_size:arch.block_size,vocab_size:ex.vocab_size,ffn_dim:ex.ffn_dim,use_flash_attention:ex.use_flash_attention,scalar_input_projection:ex.scalar_input_projection||ds==='vjepa',gradient_checkpointing:ex.gradient_checkpointing,apply:applyPayload()};}
+function pendingRecipeFromForm(){const b=bodyPayload();const micro=b.apply.micro_batch_size&&b.micro_batch_size?b.micro_batch_size:Math.min(b.batch_size,1024);const grad=b.apply.grad_accum_steps&&b.grad_accum_steps?b.grad_accum_steps:Math.max(1,Math.ceil(b.batch_size/micro));const tokStep=b.block_size*b.batch_size;const mixPct=Math.round((b.jsonl_mix_ratio||0)*100);const hfLine=b.data_source==='mixed'?hfStreamLabel({fable:b.hf_stream_fable,sol:b.hf_stream_sol,kimi:b.hf_stream_kimi,nemotron:b.hf_stream_nemotron,math:b.hf_stream_unsolved_math,pref:b.hf_stream_preference,fineweb:b.hf_stream_fineweb}):'';const mixLine=b.data_source==='local-corpus-mix'||b.data_source==='jsonl'||isSftFinetune(b.data_source)?'local only · '+localCorpusLabel(b):(b.mix_local_jsonl?'local '+mixPct+'% · '+localCorpusLabel(b):'no local mix');const ecLine=b.epoch_cycles?'epoch cycles ×'+b.epochs:'epoch cycles off';const opt=[];if(b.apply.dropout)opt.push('drop '+b.dropout);if(b.apply.warmup_steps)opt.push('warmup '+b.warmup_steps);if(b.apply.save_every_n_steps)opt.push('save/'+b.save_every_n_steps);if(b.apply.mixed_precision)opt.push(b.mixed_precision);if(b.use_flash_attention)opt.push('flash');if(b.apply.total_train_steps)opt.push('steps '+b.total_train_steps);return{arch:b.n_layer+'L × '+b.n_embd+'d × '+b.n_head+'h · block '+b.block_size+' · '+(b.model_params/1e6).toFixed(1)+'M params',batch:'batch '+b.batch_size+' · micro '+micro+'×'+grad+' · '+tokStep.toLocaleString()+' tok/step'+(opt.length?' · '+opt.join(' '):''),data:'data '+b.data_source+' · '+mixLine+(hfLine?' · '+hfLine:''),target:ecLine+' · target '+fmtTargetLabel(b.target_gb)+' · lr '+b.learning_rate.toExponential(2)+' · '+b.lr_schedule};}
+function activeRecipeLines(s){if(!s)return null;const params=(s.model_params||0)/1e6;const micro=s.micro_batch_size||s.batch_size;const grad=s.grad_accum_steps||1;const tok=(s.tokens_per_step||((s.block_size||256)*(s.batch_size||1024))).toLocaleString();const mixPct=s.jsonl_mix_ratio!=null?Math.round(s.jsonl_mix_ratio*100):25;const hfLine=s.data_source==='mixed'?hfStreamLabel({fable:s.hf_stream_fable,sol:s.hf_stream_sol,kimi:s.hf_stream_kimi,nemotron:s.hf_stream_nemotron,math:s.hf_stream_unsolved_math,pref:s.hf_stream_preference,fineweb:s.hf_stream_fineweb}):'';const mixLine=s.data_source==='local-corpus-mix'||s.data_source==='jsonl'?'local only · '+localCorpusLabel(s):(s.mix_local_jsonl?'local '+mixPct+'% · '+localCorpusLabel(s):'no local mix');const dataLine='data '+(s.data_source||'?')+' · '+mixLine+(hfLine?' · '+hfLine:'');const ecLine=s.epoch_cycles?'epoch cycles ×'+(s.epochs||1):'epoch cycles off';const wd=s.weight_decay!=null?'wd '+s.weight_decay:'wd —';const drop=s.dropout!=null?'dropout '+s.dropout:'dropout —';return{arch:(s.n_layer||'?')+'L × '+(s.n_embd||'?')+'d × '+(s.n_head||'?')+'h · block '+(s.block_size||256)+' · '+params.toFixed(1)+'M params',batch:'batch '+(s.batch_size||'?')+' · micro '+micro+'×'+grad+' · '+tok+' tok/step',data:dataLine,target:ecLine+' · target '+fmtTargetLabel(s.target_gb||10)+' · lr '+(s.learning_rate!=null?s.learning_rate.toExponential(2):'—'),train:'step '+(s.train_step||0).toLocaleString()+' · loss '+(s.last_loss?s.last_loss.toFixed(4):'—')+' · '+(s.device||'cpu')+' · '+wd+' · '+drop};}
+function renderRunHistory(data){const body=document.getElementById('runHistoryBody');const lessons=document.getElementById('runHistoryLessons');if(!body||!data)return;const rows=data.rows||[];if(!rows.length){body.innerHTML='<tr><td colspan="8">No runs logged yet</td></tr>';}else{body.innerHTML=rows.map(r=>{const v=(r.verdict||'ok').toLowerCase();const cls=(r.loaded?'row-loaded ':'')+'verdict-'+v;const phase=(r.phase||'?').toUpperCase();const loss=r.loss!=null?Number(r.loss).toFixed(4):'—';const ck=r.checkpoint||(r.jsonl_file?r.jsonl_file:'—');const disk=r.on_disk===false&&r.checkpoint?' (gone)':'';const step=r.step!=null?r.step:'—';const agent=r.agent||'—';let rm='—';if(r.reward_delta!=null)rm=(r.reward_delta>=0?'+':'')+Number(r.reward_delta).toFixed(3);else if(r.reward_mean_post!=null)rm=Number(r.reward_mean_post).toFixed(3);const lesson=r.lesson||'';return '<tr class="'+cls+'"><td>'+phase+'</td><td>'+ck+disk+'</td><td>'+step+'</td><td>'+loss+'</td><td>'+rm+'</td><td>'+agent+'</td><td>'+v+'</td><td>'+lesson+'</td></tr>';}).join('');}if(lessons){const items=data.lessons||[];lessons.innerHTML=items.map(t=>'<li>'+t+'</li>').join('');}}
+async function refreshRunHistory(){try{const d=await api('/api/runs/history');renderRunHistory(d);}catch(e){const body=document.getElementById('runHistoryBody');if(body)body.innerHTML='<tr><td colspan="8">'+e.message+'</td></tr>';}}
+function renderRecipe(s){lastActiveSnapshot=s;const active=activeRecipeLines(s);const el=document.getElementById('recipeActiveBody');if(el&&active)el.innerHTML=['<div class="recipe-line">'+active.arch+'</div>','<div class="recipe-line">'+active.batch+'</div>','<div class="recipe-line">'+active.data+'</div>','<div class="recipe-line">'+active.target+'</div>','<div class="recipe-line">'+active.train+'</div>'].join('');const pending=pendingRecipeFromForm();const pendCol=document.getElementById('recipePendingCol');const pendBody=document.getElementById('recipePendingBody');if(!pendCol||!pendBody||!active)return;const keys=['arch','batch','data','target'];let diff=false;const html=keys.map(k=>{const same=pending[k]===active[k];if(!same)diff=true;return '<div class="recipe-line '+(same?'recipe-same':'recipe-diff')+'">'+pending[k]+'</div>';}).join('');pendCol.style.display=diff?'block':'none';if(diff)pendBody.innerHTML=html;}
+function fmtTrainMeta(s){if(!s||(s.train_step||0)===0&&!s.running)return 'pending on Start';const micro=s.micro_batch_size||s.batch_size;const grad=s.grad_accum_steps||1;const tok=(s.tokens_per_step||((s.block_size||256)*(s.batch_size||1024))).toLocaleString();const wd=s.weight_decay!=null?s.weight_decay:'—';const drop=s.dropout!=null?s.dropout:'—';return 'micro '+micro+'×'+grad+' · '+tok+' tok/step · wd '+wd+' · dropout '+drop;}
+function onFormChange(){updateChinchillaTable();if(lastActiveSnapshot)renderRecipe(lastActiveSnapshot);if(typeof syncRunGoalHints==='function')syncRunGoalHints();if(typeof renderRunWorkflow==='function')renderRunWorkflow();}
+async function api(p,o){const r=await fetch(p,o),d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||('HTTP '+r.status));return d;}
+function toggleDataSource(){const ds=document.getElementById('dataSource').value;if(!scaleModeUserSet){if(isSftFinetune(ds)||ds==='jsonl'||ds==='sft-intelligence'||ds==='distill-merged'||ds==='distill-live'||ds==='nemotron-swe'||(typeof isDistillTopic==='function'&&isDistillTopic(ds)))setScaleMode('finetune');else if(ds==='mixed'||ds==='fineweb'||ds==='fable-traces'||ds==='sol-traces'||ds==='kimi-k3-traces'||ds==='unsolved-math'||ds==='nemotron-math'||ds==='multimodal'||ds==='vjepa')setScaleMode('pretrain');}updateChinchillaTable();const jsonlOnly=isJsonlOnly();document.getElementById('finewebRow').style.display=ds==='fineweb'?'grid':'none';document.getElementById('jsonlUploadRow').style.display='grid';if(typeof toggleSftGenerator==='function')toggleSftGenerator();if(typeof toggleDistillGenerator==='function')toggleDistillGenerator();const hfCell=document.getElementById('hfDatasetCell');const hfLabel=document.getElementById('hfDatasetLabel');const showHf=ds==='multimodal'||ds==='vjepa';if(hfCell)hfCell.style.display=showHf?'block':'none';if(hfLabel)hfLabel.textContent=ds==='vjepa'?'V-JEPA dataset':'Multimodal dataset';if(showHf)populateHfDatasetOptions(ds);const mixLocal=document.getElementById('mixLocalJsonl');if(mixLocal){mixLocal.disabled=jsonlOnly||!!(lastActiveSnapshot&&lastActiveSnapshot.running);if(jsonlOnly)mixLocal.checked=false;}if(ds==='local-corpus-mix'){const mc=document.getElementById('mixLocalCorpora');if(mc&&!lastActiveSnapshot?.running)mc.checked=true;}if(ds==='sft-intelligence'&&!lastActiveSnapshot?.running){const jf=document.getElementById('jsonlFile');if(jf)jf.value='sft-full-merged.jsonl';if(!lrUserSet){const lr=document.getElementById('learningRate');if(lr)lr.value=0.00001;}const tg=document.getElementById('targetGb');if(tg)tg.value=0.05;const ts=document.getElementById('totalTrainSteps');if(ts)ts.value=400;const se=document.getElementById('saveEveryN');if(se)se.value=100;const ec=document.getElementById('epochCycles');if(ec){ec.checked=true;const pt=document.querySelector('.param-toggle[data-param="epoch_cycles"]');if(pt)pt.checked=true;}const je=document.getElementById('jsonlEpochs');if(je)je.value=2;toggleEpochCycles();['hfStreamFable','hfStreamSol','hfStreamKimi','hfStreamNemotron','hfStreamMath','hfStreamPref','hfStreamFineweb'].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=false;});const mc2=document.getElementById('mixLocalCorpora');if(mc2)mc2.checked=false;}if(isSftTopic(ds)&&!lastActiveSnapshot?.running){const jf=document.getElementById('jsonlFile');if(jf)jf.value='sft-'+ds.replace('sft-','')+'.jsonl';if(!lrUserSet){const lr=document.getElementById('learningRate');if(lr)lr.value=0.00001;}const tg=document.getElementById('targetGb');if(tg)tg.value=0.08;const ts=document.getElementById('totalTrainSteps');if(ts)ts.value=400;const se=document.getElementById('saveEveryN');if(se)se.value=50;const ec=document.getElementById('epochCycles');if(ec){ec.checked=true;const pt=document.querySelector('.param-toggle[data-param="epoch_cycles"]');if(pt)pt.checked=true;}const je=document.getElementById('jsonlEpochs');if(je)je.value=2;toggleEpochCycles();['hfStreamFable','hfStreamSol','hfStreamKimi','hfStreamNemotron','hfStreamMath','hfStreamPref','hfStreamFineweb'].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=false;});const mc2=document.getElementById('mixLocalCorpora');if(mc2)mc2.checked=false;const ml=document.getElementById('mixLocalJsonl');if(ml)ml.checked=false;}if(ds==='distill-merged'&&!lastActiveSnapshot?.running){const jf=document.getElementById('jsonlFile');if(jf)jf.value='distill-merged.jsonl';if(!lrUserSet){const lr=document.getElementById('learningRate');if(lr)lr.value=0.00001;}const tg=document.getElementById('targetGb');if(tg)tg.value=0.2;const ts=document.getElementById('totalTrainSteps');if(ts)ts.value=600;const se=document.getElementById('saveEveryN');if(se)se.value=100;const ec=document.getElementById('epochCycles');if(ec){ec.checked=true;const pt=document.querySelector('.param-toggle[data-param="epoch_cycles"]');if(pt)pt.checked=true;}const je=document.getElementById('jsonlEpochs');if(je)je.value=2;toggleEpochCycles();['hfStreamFable','hfStreamSol','hfStreamKimi','hfStreamNemotron','hfStreamMath','hfStreamPref','hfStreamFineweb'].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=false;});const mc2=document.getElementById('mixLocalCorpora');if(mc2)mc2.checked=false;const ml2=document.getElementById('mixLocalJsonl');if(ml2)ml2.checked=false;}if(isDistillTopic(ds)&&!lastActiveSnapshot?.running){const jf=document.getElementById('jsonlFile');if(jf)jf.value='distill-'+ds.replace('distill-','')+'.jsonl';if(!lrUserSet){const lr=document.getElementById('learningRate');if(lr)lr.value=0.00001;}const tg=document.getElementById('targetGb');if(tg)tg.value=0.12;const ts=document.getElementById('totalTrainSteps');if(ts)ts.value=400;const se=document.getElementById('saveEveryN');if(se)se.value=50;const ec=document.getElementById('epochCycles');if(ec){ec.checked=true;const pt=document.querySelector('.param-toggle[data-param="epoch_cycles"]');if(pt)pt.checked=true;}const je=document.getElementById('jsonlEpochs');if(je)je.value=2;toggleEpochCycles();['hfStreamFable','hfStreamSol','hfStreamKimi','hfStreamNemotron','hfStreamMath','hfStreamPref','hfStreamFineweb'].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=false;});const mc2=document.getElementById('mixLocalCorpora');if(mc2)mc2.checked=false;const ml3=document.getElementById('mixLocalJsonl');if(ml3)ml3.checked=false;}if(ds==='vjepa'){const sp=document.getElementById('useScalarProjection');if(sp&&!lastActiveSnapshot?.running)sp.checked=true;}toggleLocalMix();toggleLocalCorpus();toggleEpochCycles();toggleHfStreams();}
+async function updateModelEstimate(){try{const a=archPayload();const ex=archExtras();const batch=Number(document.getElementById('batchSize').value||1024);let q='/api/model/estimate?n_layer='+a.n_layer+'&n_head='+a.n_head+'&n_embd='+a.n_embd+'&block_size='+a.block_size+'&vocab_size='+ex.vocab_size+'&batch_size='+batch+'&mode='+scaleMode;if(ex.ffn_dim)q+='&ffn_dim='+ex.ffn_dim;q+='&use_flash_attention='+ex.use_flash_attention+'&scalar_input_projection='+ex.scalar_input_projection+'&gradient_checkpointing='+ex.gradient_checkpointing;const d=await api(q);document.getElementById('modelParams').value=d.model_params;document.getElementById('archHint').value=a.n_layer+'L × '+a.n_embd+'d × '+a.n_head+'h · block '+a.block_size+' ≈ '+(d.model_params/1e6).toFixed(1)+'M';if(d.chinchilla)renderChinchillaTable(d.chinchilla);updateTargetHint();if(lastActiveSnapshot)renderRecipe(lastActiveSnapshot);}catch(e){document.getElementById('archHint').value=e.message;}}
+async function importHfCheckpoint(){const repo=(document.getElementById('hfRepoId')||{}).value||'Qwen/Qwen2.5-3B-Instruct';const btn=document.getElementById('importHfBtn');if(btn)btn.disabled=true;line('[CYAN] importing HF causal LM '+repo+'…','cyan');try{const d=await api('/api/convert/hf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({repo_id:repo,backend:'hf'})});line('[GREEN] imported '+repo+' → '+d.checkpoint_name+' ('+(d.import&&d.import.param_count?d.import.param_count.toLocaleString():'?')+' params · '+(d.import&&d.import.architecture?d.import.architecture:'HF')+')','green');await refreshSavedCheckpoints();if(window.refreshInferStatus)window.refreshInferStatus();const s=await api('/api/status');renderStatus(s);}catch(e){line('[RED] '+e.message,'red');}finally{if(btn)btn.disabled=false;}}
+function fmtSize(s){if(s.data_source==='jsonl'){const pool=s.jsonl_pool_rows||s.jsonl_total_rows||0;const ep=s.jsonl_epoch?('ep '+s.jsonl_epoch+' · '):'';const rowNote=pool?ep+((s.rows||0)%pool||pool).toLocaleString()+'/'+pool.toLocaleString()+' rows · ':'';return rowNote+fmtTargetLabel(s.target_gb||10)+' target · '+(s.size_mb||0).toFixed(2)+' MB consumed';}const gb=s.size_gb||0,mb=s.size_mb||0,t=s.target_gb||10;if(t<1)return mb.toFixed(2)+' MB / '+fmtTargetLabel(t);if(gb<0.01)return mb.toFixed(2)+' MB / '+t+' GB';return gb.toFixed(3)+'/'+t+' GB';}
+function renderSessionBadge(s){const el=document.getElementById('hostBadge');if(!el)return;const host=(s&&s.host)||window._hostName||'app9';if(s&&s.host)window._hostName=s.host;if(!s||(!s.model_ready&&!s.checkpoint_name&&!(s.train_step||0))){el.textContent=host+' · no model loaded — import HF or load .pt';el.title='Session idle — use checkpoints panel or a recipe preset';return;}if(s.model_label){el.textContent=host+' · '+s.model_label+(s.device?' · '+String(s.device).toUpperCase():'');el.title='Live loaded model · updates every poll';return;}const parts=[];if(s.model_backend==='hf'&&s.hf_repo_id)parts.push('HF:'+String(s.hf_repo_id).split('/').pop());else if(s.model_params)parts.push(Number(s.model_params).toLocaleString()+' params');if(s.n_layer&&s.n_embd&&s.model_backend!=='hf')parts.push(s.n_layer+'L×'+s.n_embd+'d');if(s.data_source)parts.push(s.data_source);if(s.checkpoint_name)parts.push(s.checkpoint_name);el.textContent=host+' · '+parts.join(' · ')+(s.device?' · '+String(s.device).toUpperCase():'');el.title='Live session badge';}
+function applyDistillLiveDormant(enabled){const sel=document.getElementById('dataSource');if(!sel)return;const opt=sel.querySelector('option[value="distill-live"]');if(!opt)return;opt.disabled=!enabled;if(!enabled){opt.textContent='Distill — live (dormant)';if(sel.value==='distill-live'){sel.value='mixed';if(typeof toggleDataSource==='function')toggleDataSource();}}else{opt.textContent='Distill — live (teachers during train)';}}
+function renderGpuVram(s){const g=(s&&s.gpu_vram)||{};const loc=g.local||{};const bar=document.getElementById('gpuVramBar');const label=document.getElementById('gpuVramLabel');const badge=document.getElementById('gpuVramBadge');if(!bar||!label)return;const hasPeers=g.peers&&g.peers.length&&g.combined_total_mb>0;const used=hasPeers?g.combined_allocated_mb:(loc.allocated_mb||0);const total=hasPeers?g.combined_total_mb:(loc.total_mb||0);const pct=total>0?Math.min(100,100*used/total):0;bar.style.width=pct.toFixed(1)+'%';if(hasPeers){const peer=g.peers.find(p=>p.available);const peerTxt=peer?(' · peer '+Math.round(peer.allocated_mb||0)+' MB'):'';label.textContent='Combined '+Math.round(used)+' / '+Math.round(total)+' MB ('+pct.toFixed(1)+'%) · local '+Math.round(loc.allocated_mb||0)+' MB'+peerTxt;}else if(loc.available){label.textContent=(loc.name||'GPU')+': '+Math.round(used)+' / '+Math.round(total)+' MB ('+pct.toFixed(1)+'%)';}else{label.textContent='VRAM: no CUDA GPU detected';}if(badge){badge.textContent=s&&s.running?'live':'idle';badge.className='gpu-vram-badge '+(s&&s.running?'run':'idle');}}
+function renderStatus(s){renderSessionBadge(s);const lr=s.learning_rate!=null?s.learning_rate.toExponential(2):'—';const bs=s.batch_size!=null?s.batch_size:'—';const micro=s.micro_batch_size&&s.micro_batch_size<s.batch_size?' (micro '+s.micro_batch_size+'×'+(s.grad_accum_steps||1)+')':'';const ck=s.checkpoint_name?' · ckpt '+s.checkpoint_name:'';const arch=s.n_layer!=null?' · '+s.n_layer+'L×'+s.n_embd+'d':'';const mixParts=[];if(s.jsonl_hits)mixParts.push('local '+(s.jsonl_hits||0));if(s.fable_hits)mixParts.push('fable '+(s.fable_hits||0));if(s.sol_hits)mixParts.push('sol '+(s.sol_hits||0));if(s.kimi_hits)mixParts.push('kimi '+(s.kimi_hits||0));if(s.preference_hits)mixParts.push('pref '+(s.preference_hits||0));if(s.math_hits)mixParts.push('math '+(s.math_hits||0));if(s.nemotron_hits)mixParts.push('nemotron '+(s.nemotron_hits||0));if(s.swe_hits)mixParts.push('swe '+(s.swe_hits||0));if(s.multimodal_hits)mixParts.push('mm '+(s.multimodal_hits||0));if(s.vjepa_hits)mixParts.push('vjepa '+(s.vjepa_hits||0));const mix=mixParts.length?' · '+mixParts.join(' '):'';const dsNote=(s.data_source==='multimodal'||s.data_source==='vjepa')&&s.hf_dataset_id?' · '+s.hf_dataset_id:'';document.getElementById('stats').textContent=(s.status||'idle')+' · '+(s.data_source||'multimodal')+dsNote+' — step '+(s.train_step||0).toLocaleString()+' loss '+(s.last_loss?s.last_loss.toFixed(4):'—')+' · lr '+lr+' · batch '+bs+micro+arch+ck+mix+' · '+fmtSize(s)+' · '+(s.last_tok_s||0)+' tok/s'+(s.can_resume?' · RESUMABLE':'');document.getElementById('progressFill').style.width=Math.min(100,s.progress_pct||0)+'%';const archLocked=!!s.running||(s.train_step||0)>0;const lockHint=document.getElementById('archLockHint');if(lockHint)lockHint.style.display=archLocked?'block':'none';document.getElementById('startBtn').disabled=!!s.running;document.getElementById('resumeBtn').disabled=!!s.running||!s.can_resume;document.getElementById('exportBtn').disabled=!s.export_ready;document.getElementById('learningRate').disabled=!!s.running;document.getElementById('batchSize').disabled=!!s.running;document.getElementById('nLayer').disabled=archLocked;document.getElementById('nEmbd').disabled=archLocked;document.getElementById('nHead').disabled=archLocked;document.getElementById('blockSize').disabled=archLocked;if(document.getElementById('ffnDim'))document.getElementById('ffnDim').disabled=archLocked||!isParamOn('ffn_dim');if(document.getElementById('vocabSize'))document.getElementById('vocabSize').disabled=archLocked||!isParamOn('vocab_size');document.querySelectorAll('.param-toggle').forEach(t=>{if(t.disabled)return;const pk=t.dataset.param;if(['n_layer','n_head','n_embd','block_size','ffn_dim','vocab_size','use_flash_attention','scalar_input_projection','gradient_checkpointing'].includes(pk))t.disabled=archLocked;});document.getElementById('loadCkptBtn').disabled=!!s.running;document.getElementById('loadSavedBtn').disabled=!!s.running;document.getElementById('deleteCkptBtn').disabled=!!s.running;document.getElementById('clearOldCkptBtn').disabled=!!s.running;document.getElementById('resetSessionBtn').disabled=!!s.running;document.getElementById('uploadDataBtn').disabled=!!s.running;document.getElementById('epochCycles').disabled=!!s.running||!isParamOn('epoch_cycles')||!(document.getElementById('epochCycles')||{}).checked;document.getElementById('shuffleHfDatasets').disabled=!!s.running||!isParamOn('shuffle_hf_datasets');document.getElementById('mixLocalCorpora').disabled=!!s.running||!isParamOn('mix_local_corpora');document.getElementById('mixLocalJsonl').disabled=!!s.running||isJsonlOnly()||!isParamOn('mix_local_jsonl');document.getElementById('jsonlEpochs').disabled=!!s.running||!(document.getElementById('epochCycles')||{}).checked;document.getElementById('dataSource').disabled=!!s.running;if(s.model_params!=null&&(archLocked||!archUserSet))document.getElementById('modelParams').value=s.model_params;if(s.n_layer!=null&&(archLocked||!archUserSet)){if(s.model_backend==='hf')document.getElementById('archHint').value='HF native · '+(s.hf_repo_id||'?')+' · block '+(s.block_size||'?')+' · '+(s.model_params/1e6).toFixed(1)+'M';else document.getElementById('archHint').value=s.n_layer+'L × '+s.n_embd+'d × '+s.n_head+'h · block '+(s.block_size||256)+' · '+(s.model_params/1e6).toFixed(1)+'M';}if(!archUserSet&&!archLocked){if(s.block_size!=null)document.getElementById('blockSize').value=s.block_size;if(s.n_layer){document.getElementById('nLayer').value=s.n_layer;document.getElementById('nEmbd').value=s.n_embd;document.getElementById('nHead').value=s.n_head;}if(s.ffn_dim!=null)document.getElementById('ffnDim').value=s.ffn_dim;if(s.vocab_size!=null)document.getElementById('vocabSize').value=s.vocab_size;syncFfnDim();}if(s.use_flash_attention!=null&&!archLocked){const el=document.getElementById('useFlashAttention');if(el)el.checked=!!s.use_flash_attention;}if(s.scalar_input_projection!=null&&!archLocked){const el=document.getElementById('useScalarProjection');if(el)el.checked=!!s.scalar_input_projection;}if(s.gradient_checkpointing!=null&&!archLocked){const el=document.getElementById('useGradCkpt');if(el)el.checked=!!s.gradient_checkpointing;}if(s.lr_schedule&&!s.running){const ls=document.getElementById('lrSchedule');if(ls)ls.value=s.lr_schedule;}if(s.total_train_steps!=null&&!s.running)document.getElementById('totalTrainSteps').value=s.total_train_steps;if(s.dropout!=null&&!s.running)document.getElementById('dropout').value=s.dropout;if(s.weight_decay!=null&&!s.running)document.getElementById('weightDecay').value=s.weight_decay;if(s.warmup_steps!=null&&!s.running)document.getElementById('warmupSteps').value=s.warmup_steps;if(s.mixed_precision&&!s.running){const mp=document.getElementById('mixedPrecision');if(mp)mp.value=s.mixed_precision;}if(s.save_every_n_steps!=null&&!s.running)document.getElementById('saveEveryN').value=s.save_every_n_steps;if(s.micro_batch_size&&!s.running)document.getElementById('microBatchSize').value=s.micro_batch_size;if(s.grad_accum_steps&&!s.running)document.getElementById('gradAccumSteps').value=s.grad_accum_steps;document.getElementById('trainMeta').value=fmtTrainMeta(s);if(s.config)document.getElementById('config').value=s.config;if(s.data_source&&(s.running||(!dataSourceUserSet&&s.status==='streaming')))document.getElementById('dataSource').value=s.data_source;if(s.jsonl_file&&(s.running||!jsonlFileUserSet))document.getElementById('jsonlFile').value=s.jsonl_file;if(s.jsonl_mix_ratio!=null)document.getElementById('jsonlMix').value=Math.round(s.jsonl_mix_ratio*100);if(s.mix_local_jsonl!=null&&!s.running&&s.data_source!=='jsonl')document.getElementById('mixLocalJsonl').checked=!!s.mix_local_jsonl;if(s.shuffle_hf_datasets!=null&&!s.running){const sh=document.getElementById('shuffleHfDatasets');if(sh)sh.checked=!!s.shuffle_hf_datasets;}if(s.mix_local_corpora!=null&&!s.running){const mc=document.getElementById('mixLocalCorpora');if(mc)mc.checked=!!s.mix_local_corpora;}if(s.hf_stream_fable!=null&&!s.running){const m={hfStreamFable:s.hf_stream_fable,hfStreamSol:s.hf_stream_sol,hfStreamKimi:s.hf_stream_kimi,hfStreamNemotron:s.hf_stream_nemotron,hfStreamMath:s.hf_stream_unsolved_math,hfStreamPref:s.hf_stream_preference,hfStreamFineweb:s.hf_stream_fineweb};Object.keys(m).forEach(id=>{const el=document.getElementById(id);if(el)el.checked=!!m[id];});}if(s.epochs&&(s.epoch_cycles||s.epochs>1)){document.getElementById('epochCycles').checked=true;document.getElementById('jsonlEpochs').value=s.epochs;document.getElementById('jsonlEpochs').disabled=false;}else if(!s.running){toggleEpochCycles();}if(s.n_layer&&!archLocked&&!archUserSet){updateModelEstimate();}toggleDataSource();toggleLocalCorpus();toggleLocalMix();toggleHfStreams();renderRecipe(s);renderCkptStatus(s);renderGpuVram(s);}
+function renderCkptStatus(s){const el=document.getElementById('ckptStatus');if(!el)return;if(s.checkpoint_name)el.textContent='Loaded: '+s.checkpoint_name+' · step '+(s.train_step||0).toLocaleString()+' · loss '+(s.last_loss?s.last_loss.toFixed(4):'—');else if(s.export_ready)el.textContent='In-memory weights from current run (step '+(s.train_step||0).toLocaleString()+').';else el.textContent='No checkpoint loaded — upload a .pt or train a few steps.';}
+async function refreshSavedCheckpoints(){try{const d=await api('/api/checkpoints');const sel=document.getElementById('ckptSaved');if(!sel)return;const cur=sel.value;sel.innerHTML='<option value="">—</option>';(d.checkpoints||[]).forEach(c=>{const o=document.createElement('option');o.value=c.name;o.textContent=c.name+' ('+c.size_mb+' MB)';if(c.loaded)o.textContent+=' ✓';sel.appendChild(o);});if(cur)sel.value=cur;const disk=document.getElementById('ckptDisk');if(disk)disk.textContent=(d.count||0)+' checkpoint'+(d.count===1?'':'s')+' · '+(d.total_mb||0)+' MB total'+(d.loaded?' · loaded: '+d.loaded:'');}catch(e){}}
+async function deleteSelectedCheckpoint(){const name=(document.getElementById('ckptSaved')||{}).value;if(!name){line('[RED] pick a saved checkpoint','red');return;}if(!confirm('Delete '+name+' from server disk? Download first if you need it for inference.'))return;try{const d=await api('/api/checkpoints/'+encodeURIComponent(name),{method:'DELETE'});line('[GREEN] deleted '+name+' · freed '+(d.freed_mb||0)+' MB','green');await refreshSavedCheckpoints();}catch(e){line('[RED] '+e.message,'red');}}
+async function clearOldCheckpoints(){if(!confirm('Delete ALL local checkpoints except the loaded one? Download any you need for inference first.'))return;try{const d=await api('/api/checkpoints/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({all_except_loaded:true})});line('[GREEN] cleared '+(d.deleted||[]).length+' file(s) · freed '+(d.freed_mb||0)+' MB','green');await refreshSavedCheckpoints();}catch(e){line('[RED] '+e.message,'red');}}
+async function resetTrainingSession(){if(!confirm('Reset session? Unloads GPU weights and clears loaded checkpoint from memory. Disk .pt files are kept.'))return;try{await api('/api/checkpoints/reset-session',{method:'POST'});line('[YELLOW] session reset — in-memory weights cleared','yellow');await refreshSavedCheckpoints();if(window.refreshInferStatus)window.refreshInferStatus();const s=await api('/api/status');renderStatus(s);}catch(e){line('[RED] '+e.message,'red');}}
+async function importCheckpoint(){const f=document.getElementById('ckptFile');if(!f||!f.files||!f.files[0]){line('[RED] pick a .pt file first','red');return;}const btn=document.getElementById('loadCkptBtn');if(btn)btn.disabled=true;line('[CYAN] uploading '+f.files[0].name+'…','cyan');try{const fd=new FormData();fd.append('file',f.files[0]);const r=await fetch('/api/import/checkpoint',{method:'POST',body:fd});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||('HTTP '+r.status));line('[GREEN] loaded '+d.checkpoint_name+' step '+d.step,'green');await refreshSavedCheckpoints();if(window.refreshInferStatus)window.refreshInferStatus();const s=await api('/api/status');renderStatus(s);}catch(e){line('[RED] '+e.message,'red');}finally{if(btn)btn.disabled=false;}}
+async function loadSavedCheckpoint(){const name=(document.getElementById('ckptSaved')||{}).value;if(!name){line('[RED] pick a saved checkpoint','red');return;}try{const d=await api('/api/import/checkpoint/local',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name})});line('[GREEN] loaded '+d.checkpoint_name+' step '+d.step,'green');if(window.refreshInferStatus)window.refreshInferStatus();const s=await api('/api/status');renderStatus(s);}catch(e){line('[RED] '+e.message,'red');}}
+async function refreshDataFiles(){try{const d=await api('/api/data');const sel=document.getElementById('jsonlFile');if(!sel)return;const cur=sel.value;sel.innerHTML='';(d.files||[]).forEach(f=>{const o=document.createElement('option');o.value=f.name;o.textContent=f.name+' ('+f.rows+' rows)';sel.appendChild(o);});if(cur)sel.value=cur;else if((d.files||[]).length)sel.value=d.files[0].name;}catch(e){}}
+async function importDataFile(){const f=document.getElementById('dataFile');if(!f||!f.files||!f.files[0]){line('[RED] pick a .jsonl file first','red');return;}line('[CYAN] uploading '+f.files[0].name+'…','cyan');try{const fd=new FormData();fd.append('file',f.files[0]);const r=await fetch('/api/import/data',{method:'POST',body:fd});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||('HTTP '+r.status));line('[GREEN] uploaded '+d.name+' · '+d.rows+' rows','green');await refreshDataFiles();document.getElementById('jsonlFile').value=d.name;}catch(e){line('[RED] '+e.message,'red');}}
+async function boot(){try{const saved=localStorage.getItem('scaleMode');if(saved==='finetune'||saved==='pretrain')scaleMode=saved;}catch(e){}const h=await api('/api/health');window.distillLiveEnabled=!!h.distill_live_enabled;window.masterAgentEnabled=!!h.master_agent_enabled;applyDistillLiveDormant(window.distillLiveEnabled);multimodalDatasets=h.multimodal_datasets||[];vjepaDatasets=h.vjepa_datasets||[];window.multimodalDatasets=multimodalDatasets;window.vjepaDatasets=vjepaDatasets;window.multimodalDatasetsVerified=h.multimodal_datasets_verified||multimodalDatasets;window.vjepaDatasetsVerified=h.vjepa_datasets_verified||vjepaDatasets;window.hfProbeStatus=h.hf_dataset_probe||{};window.defaultMultimodalDataset=h.default_multimodal_dataset||'multimodal-reasoning-lab/Zebra-CoT';window.defaultVjepaDataset=h.default_vjepa_dataset||'rookierufus/epic-kitchens-vjepa';if(typeof updateRunPlaybook==='function')updateRunPlaybook(h,null);if(h.local_corpus_mix_label)window.CORPUS_MIX_LABEL=h.local_corpus_mix_label;const tokSel=document.getElementById('tokenizerId');if(tokSel&&h.tokenizer_options){tokSel.innerHTML='';Object.entries(h.tokenizer_options).forEach(([label,id])=>{const o=document.createElement('option');o.value=id;o.textContent=label;tokSel.appendChild(o);});if(h.default_tokenizer_id)tokSel.value=h.default_tokenizer_id;}populateHfDatasetOptions((document.getElementById('dataSource')||{}).value||'mixed');document.getElementById('hostBadge').textContent=h.host+' · loading session…';if(h.target_gb!=null&&!archUserSet)document.getElementById('targetGb').value=(h.ui_defaults&&h.ui_defaults.target_gb!=null)?h.ui_defaults.target_gb:h.target_gb;if(h.default_learning_rate!=null&&!lrUserSet)document.getElementById('learningRate').value=h.default_learning_rate;if(h.default_batch_size!=null&&!batchUserSet)document.getElementById('batchSize').value=h.default_batch_size;if(!archUserSet){const ud=h.ui_defaults||{};if(ud.n_layer||h.default_n_layer)document.getElementById('nLayer').value=ud.n_layer||h.default_n_layer;if(ud.n_head||h.default_n_head)document.getElementById('nHead').value=ud.n_head||h.default_n_head;if(ud.n_embd||h.default_n_embd)document.getElementById('nEmbd').value=ud.n_embd||h.default_n_embd;if(ud.block_size||h.block_size)document.getElementById('blockSize').value=ud.block_size||h.block_size;if(ud.vocab_size||h.default_vocab_size)document.getElementById('vocabSize').value=ud.vocab_size||h.default_vocab_size;if(ud.ffn_dim||h.default_ffn_dim)document.getElementById('ffnDim').value=ud.ffn_dim||h.default_ffn_dim;if(ud.tokenizer_id&&tokSel)tokSel.value=ud.tokenizer_id;}if(h.dropout!=null)document.getElementById('dropout').value=h.dropout;if(h.weight_decay!=null)document.getElementById('weightDecay').value=h.weight_decay;if(h.default_warmup_steps!=null)document.getElementById('warmupSteps').value=h.default_warmup_steps;else if(h.warmup_steps!=null)document.getElementById('warmupSteps').value=h.warmup_steps;if(h.default_mixed_precision||h.mixed_precision){const mp=document.getElementById('mixedPrecision');if(mp)mp.value=h.default_mixed_precision||h.mixed_precision;}if(h.default_save_every_n_steps!=null)document.getElementById('saveEveryN').value=h.default_save_every_n_steps;else if(h.save_every_n_steps!=null)document.getElementById('saveEveryN').value=h.save_every_n_steps;if(h.default_micro_batch_size)document.getElementById('microBatchSize').value=h.default_micro_batch_size;else if(h.micro_batch_size)document.getElementById('microBatchSize').value=h.micro_batch_size;if(h.default_grad_accum_steps)document.getElementById('gradAccumSteps').value=h.default_grad_accum_steps;else if(h.grad_accum_steps)document.getElementById('gradAccumSteps').value=h.grad_accum_steps;if(archUserSet&&h.ffn_dim!=null)document.getElementById('ffnDim').value=h.ffn_dim;if(archUserSet&&h.vocab_size!=null)document.getElementById('vocabSize').value=h.vocab_size;{const el=document.getElementById('useFlashAttention');if(el)el.checked=h.default_use_flash_attention!=null?!!h.default_use_flash_attention:!!h.use_flash_attention;}if(h.scalar_input_projection!=null){const el=document.getElementById('useScalarProjection');if(el)el.checked=!!h.scalar_input_projection;}if(h.gradient_checkpointing!=null){const el=document.getElementById('useGradCkpt');if(el)el.checked=!!h.gradient_checkpointing;}if(h.default_lr_schedule||h.lr_schedule){const ls=document.getElementById('lrSchedule');if(ls)ls.value=h.default_lr_schedule||h.lr_schedule;}if(h.default_total_train_steps!=null)document.getElementById('totalTrainSteps').value=h.default_total_train_steps;else if(h.total_train_steps!=null)document.getElementById('totalTrainSteps').value=h.total_train_steps;if(h.flash_attention_available!=null){const fh=document.getElementById('flashHint');if(fh)fh.textContent=h.flash_attention_available?'SDPA on CUDA':'SDPA unavailable';}syncFfnDim();if(h.default_data_source&&!dataSourceUserSet)document.getElementById('dataSource').value=h.default_data_source;if(h.default_jsonl_mix_ratio!=null)document.getElementById('jsonlMix').value=Math.round(h.default_jsonl_mix_ratio*100);if(h.default_shuffle_hf_datasets!=null){const sh=document.getElementById('shuffleHfDatasets');if(sh)sh.checked=!!h.default_shuffle_hf_datasets;}if(h.default_mix_local_corpora!=null){const mc=document.getElementById('mixLocalCorpora');if(mc)mc.checked=!!h.default_mix_local_corpora;}if(h.default_hf_stream_fable!=null){const el=document.getElementById('hfStreamFable');if(el)el.checked=!!h.default_hf_stream_fable;}if(h.default_hf_stream_sol!=null){const el=document.getElementById('hfStreamSol');if(el)el.checked=!!h.default_hf_stream_sol;}if(h.default_hf_stream_kimi!=null){const el=document.getElementById('hfStreamKimi');if(el)el.checked=!!h.default_hf_stream_kimi;}if(h.default_hf_stream_nemotron!=null){const el=document.getElementById('hfStreamNemotron');if(el)el.checked=!!h.default_hf_stream_nemotron;}if(h.default_hf_stream_unsolved_math!=null){const el=document.getElementById('hfStreamMath');if(el)el.checked=!!h.default_hf_stream_unsolved_math;}if(h.default_hf_stream_preference!=null){const el=document.getElementById('hfStreamPref');if(el)el.checked=!!h.default_hf_stream_preference;}if(h.default_hf_stream_fineweb!=null){const el=document.getElementById('hfStreamFineweb');if(el)el.checked=!!h.default_hf_stream_fineweb;}if(h.min_target_gb!=null){const inp=document.getElementById('targetGb');if(inp)inp.min=h.min_target_gb;}updateTargetHint();['dropout','grad_accum_steps','micro_batch_size','warmup_steps','weight_decay','mixed_precision','save_every_n_steps','ffn_dim','vocab_size','lr_schedule','total_train_steps','use_flash_attention','scalar_input_projection','gradient_checkpointing','shuffle_hf_datasets','mix_local_corpora','hf_streams','jsonl_file','tokenizer_id','hf_dataset_id'].forEach(toggleParam);toggleEpochCycles();toggleLocalCorpus();toggleLocalMix();toggleHfStreams();toggleDataSource();setScaleMode(scaleMode);await updateModelEstimate();const b=document.getElementById('readyBadge');b.textContent=h.hf_token_loaded&&h.cos_configured?'ready':'missing secrets';b.className='badge '+(h.hf_token_loaded&&h.cos_configured?'ok':'bad');const s=await api('/api/status');renderStatus(s);await refreshSavedCheckpoints();await refreshDataFiles();await refreshRunHistory();const lg=await api('/api/log?since=0');(lg.lines||[]).forEach(l=>line(l.msg,l.color));logOffset=lg.index||0;booted=true;schedulePoll(true);}
+async function poll(){try{const s=await api('/api/status');renderStatus(s);if(typeof updateInferFromStatus==='function')updateInferFromStatus(s);if(typeof updateRunPlaybook==='function')updateRunPlaybook(null,s);if(typeof renderRunGoalLive==='function')renderRunGoalLive(s);let lg=await api('/api/log?since='+logOffset);if((lg.index||0)<logOffset){logOffset=0;lg=await api('/api/log?since=0');}(lg.lines||[]).forEach(l=>line(l.msg,l.color));logOffset=lg.index||0;if(s.status==='complete'&&!window._lastHistStatus){window._lastHistStatus=s.status;refreshRunHistory();}else if(s.status!=='complete')window._lastHistStatus='';schedulePoll(!!s.running);}catch(e){schedulePoll(!!true);}}
+window.updateModelEstimate=updateModelEstimate;
+function schedulePoll(fast){if(pollTimer)clearTimeout(pollTimer);pollTimer=setTimeout(poll,fast?2000:6000);}
+async function startStream(resume){try{const payload={...bodyPayload(),...runGoalPayload(),resume};await api(resume?'/api/resume':'/api/start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});line(resume?'[GREEN] resume':'[GREEN] start','green');if(typeof renderRunGoalLive==='function')renderRunGoalLive(await api('/api/status'));schedulePoll(true);}catch(e){const msg=e.message||String(e);if(msg.indexOf('Preflight')>=0||msg.indexOf('jsonl_rows')>=0)line('[RED] '+msg,'red');else line('[RED] '+msg,'red');}}
+async function stopStream(){await api('/api/stop',{method:'POST'});line('[YELLOW] stop — saving checkpoint','yellow');}
+async function togglePause(){const d=await api('/api/pause',{method:'POST'});line('[CYAN] paused='+d.paused,'cyan');}
+function exportCheckpoint(){window.location.href='/api/export/checkpoint';}
+function downloadSavedCheckpoint(){const name=(document.getElementById('ckptSaved')||{}).value;if(!name){line('[RED] pick a saved checkpoint from the dropdown','red');return;}window.location.href='/api/checkpoints/'+encodeURIComponent(name)+'/download';}
+</script>
+<script src="/static/run-guard.js?v=3"></script>
+<script src="/static/changelog.js?v=1"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+<script>
+function renderTheoryMath(){
+  if(typeof renderMathInElement!=='function')return;
+  const el=document.querySelector('.theory-panel');
+  if(!el)return;
+  renderMathInElement(el,{delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false});
+}
+document.addEventListener('DOMContentLoaded',renderTheoryMath);
+boot().catch(e=>line('[RED] '+e.message,'red'));
+</script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+NextAura agent contract — app7.nextaura.us
+Primary scrape targets (do not parse HTML):
+  GET https://app7.nextaura.us/agent.json
+  GET https://app7.nextaura.us/api/agent/platform
+  GET https://app7.nextaura.us/api/agent/models
+  GET https://app7.nextaura.us/llms.txt
+  GET https://app7.nextaura.us/api/health
+  GET https://app7.nextaura.us/api/status
+
+Platform index (all labs):
+  GET https://app7.nextaura.us/api/agent/platform
+
+Refresh index:
+  POST https://app7.nextaura.us/api/agent/scrape

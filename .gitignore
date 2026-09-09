@@ -1,0 +1,11 @@
+.gpu.env
+.env
+.env.*
+.venv/
+__pycache__/
+*.py[cod]
+*.log
+.DS_Store
+checkpoints/
+data/*.jsonl
+*.pt

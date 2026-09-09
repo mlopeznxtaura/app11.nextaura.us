@@ -1,0 +1,22 @@
+NextAura app7 — Multimodal + V-JEPA recipe cheat sheet
+Host: https://app7.nextaura.us
+
+HOW TO USE
+1. Open the UI cheat sheet (top panel) or POST /api/start with matching fields.
+2. Multimodal = text/caption/conversation rows from HF datasets (multimodal_data.py).
+3. V-JEPA = latent vectors + metadata; enable scalar_input_projection (12d).
+
+MULTIMODAL RECIPES
+- Smoke: data_source=multimodal, hf_dataset_id=DAMO-NLP-SG/multimodal_textbook, target_gb=0.05, lr=3e-4, batch=512, micro=128, grad_accum=4, bf16
+- Textbook pretrain: same dataset, target_gb=3.33, batch=1024, micro=256, grad_accum=4, cosine warmup 500
+- Zebra-CoT: hf_dataset_id=multimodal-reasoning-lab/Zebra-CoT, fine-tune mode, target_gb=1, lr=2e-5
+
+V-JEPA RECIPES (scalar_input_projection=true required)
+- Smoke: data_source=vjepa, hf_dataset_id=rookierufus/epic-kitchens-vjepa, target_gb=0.1, lr=1e-4, batch=512
+- Epic Kitchens: same dataset, target_gb=3.33, lr=1e-4, batch=1024, micro=256, grad_accum=4
+- LIBERO: hf_dataset_id=Adjimavo/libero_world_latents_vjepa_m4, target_gb=1, lr=8e-5, micro=64, grad_accum=8
+
+API
+POST https://app7.nextaura.us/api/start
+GET  https://app7.nextaura.us/api/status
+GET  https://app7.nextaura.us/api/health  (lists multimodal_datasets + vjepa_datasets)

@@ -1,0 +1,8 @@
+name = "nextaura-app9-us"
+main = "worker.js"
+compatibility_date = "2026-08-16"
+account_id = "683f127c03af82423467b6fad679252c"
+
+[[routes]]
+pattern = "app9.nextaura.us"
+custom_domain = true

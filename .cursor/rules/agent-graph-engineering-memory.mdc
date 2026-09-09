@@ -1,0 +1,25 @@
+---
+description: Operating memory for the three NextAura GPU training labs (app7, app8, app9)
+alwaysApply: true
+---
+
+# Three GPU labs — agent graph memory
+
+Scrape `GET /agent.json` (and on app9 `GET /agent-graph.json`). Never scrape HTML for recipe or status.
+
+| Lab | GPU / origin | Mission |
+|---|---|---|
+| **app7** | 2×L40S · `150.239.225.134` | FineWeb / distill / Nemotron-SWE lineage. Do not stop for V-JEPA experiments. |
+| **app8** | 1×L40S · `169.59.163.90` | MCF / V-JEPA experimental. `AUTO_RESUME=1` — reset-session + `resume:false` on recipe change. |
+| **app9** | 2×L40S 96GB · `150.239.227.60` · `/data` 500GB | Merge of app7 GUI + app8 trainer. Primary Muse-Glimmer-30B + GPT lab. |
+
+## Token economics
+
+`need = block_size * batch_size + 1` before one step. FineWeb rows are thousands of tokens; raw V-JEPA Hub rows are 50–200. Copying FineWeb batch 768 + 24 GB onto V-JEPA is a category error (months of wall time). MCF v2: pack 128 frames, batch 256, stop on ~1.5B tokens / 5.25 GB.
+
+## Gates
+
+- Finetune only on a pretrained checkpoint (seed-only SFT fails ~17M).
+- Pretrain lr `2e-4–3e-4`; finetune `1e-5–1e-4`.
+- RM panel after save; delta ~0.1 is noise; regression = discard.
+- Record lessons on `/api/runs/record`. Full graph: `public/agent-graph.json`.

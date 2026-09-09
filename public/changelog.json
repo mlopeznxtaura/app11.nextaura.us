@@ -1,0 +1,161 @@
+{
+  "generated_at": "2026-09-02T03:34:22.167249+00:00",
+  "head": "837b3fd4e57470009dfda9f1da9d4b1e33a6f589",
+  "head_short": "837b3fd",
+  "branch": "main",
+  "repo": "mlopeznxtaura/app7-nextaura-us",
+  "entries": [
+    {
+      "sha": "837b3fd4e57470009dfda9f1da9d4b1e33a6f589",
+      "short_sha": "837b3fd",
+      "author": "mlopeznxtaura",
+      "date": "2026-09-01T20:33:58-07:00",
+      "subject": "Add distill-live training, master agent orchestrator, and platform agent index.",
+      "url": "https://github.com/mlopeznxtaura/app7-nextaura-us/commit/837b3fd4e57470009dfda9f1da9d4b1e33a6f589"
+    },
+    {
+      "sha": "a6a7e113a182cf418cca6f64ee003f327a01278e",
+      "short_sha": "a6a7e11",
+      "author": "github-actions[bot]",
+      "date": "2026-09-01T15:10:53Z",
+      "subject": "chore: refresh UI changelog from git history",
+      "url": "https://github.com/mlopeznxtaura/app7-nextaura-us/commit/a6a7e113a182cf418cca6f64ee003f327a01278e"
+    },
+    {
+      "sha": "537d7eefde4cc9726a8baaef28c006bc25a8b6bb",
+      "short_sha": "537d7ee",
+      "author": "mlopeznxtaura",
+      "date": "2026-09-01T08:10:33-07:00",
+      "subject": "Combine stream picker with playbook presets and fix HF stream loading.",
+      "url": "https://github.com/mlopeznxtaura/app7-nextaura-us/commit/537d7eefde4cc9726a8baaef28c006bc25a8b6bb"
+    },
+    {
+      "sha": "26a2f9820dc9ec6f6a84ab052f02502712f3eef6",
+      "short_sha": "26a2f98",
+      "author": "github-actions[bot]",
+      "date": "2026-09-01T15:01:49Z",
+      "subject": "chore: refresh UI changelog from git history",
+      "url": "https://github.com/mlopeznxtaura/app7-nextaura-us/commit/26a2f9820dc9ec6f6a84ab052f02502712f3eef6"
+    },
+    {
+      "sha": "a1cd04d01ebf7c9fb8cf0b72cd6c33e484473b18",
+      "short_sha": "a1cd04d",
+      "author": "mlopeznxtaura",
+      "date": "2026-09-01T08:01:32-07:00",
+      "subject": "Fix workflow E2E: Zebra-CoT stream and await Start after preflight.",
+      "url": "https://github.com/mlopeznxtaura/app7-nextaura-us/commit/a1cd04d01ebf7c9fb8cf0b72cd6c33e484473b18"
+    },
+    {
+      "sha": "7b17eb00ff533a74967c9bdc28c0560932b7108c",
+      "short_sha": "7b17eb0",
+      "author": "mlopeznxtaura",
+      "date": "2026-09-01T07:55:17-07:00",
+      "subject": "Bump workflow script cache version after Start button fix.",
+      "url": "https://github.com/mlopeznxtaura/app7-nextaura-us/commit/7b17eb00ff533a74967c9bdc28c0560932b7108c"
+    },
+    {
+      "sha": "a44a5bd700c6ff112a7dd0b7629d4902493825d5",
+      "short_sha": "a44a5bd",
+      "author": "github-actions[bot]",
+      "date": "2026-09-01T14:50:46Z",
+      "subject": "chore: refresh UI changelog from git history",
+      "url": "https://github.com/mlopeznxtaura/app7-nextaura-us/commit/a44a5bd700c6ff112a7dd0b7629d4902493825d5"
+    },
+    {
+      "sha": "33a7ce9b5008d6f0f457cdb26fe2ccd3124fc168",
+      "short_sha": "33a7ce9",
+      "author": "mlopeznxtaura",
+      "date": "2026-09-01T07:50:31-07:00",
+      "subject": "Fix Start button staying disabled after workflow locks.",
+      "url": "https://github.com/mlopeznxtaura/app7-nextaura-us/commit/33a7ce9b5008d6f0f457cdb26fe2ccd3124fc168"
+    },
+    {
+      "sha": "57bbecb012c2097cf6865d3be715d1160e14267d",
+      "short_sha": "57bbecb",
+      "author": "mlopeznxtaura",
+      "date": "2026-09-01T07:42:43-07:00",
+      "subject": "Fix workflow stream check when HF dropdown is populated.",
+      "url": "https://github.com/mlopeznxtaura/app7-nextaura-us/commit/57bbecb012c2097cf6865d3be715d1160e14267d"
+    },
+    {
+      "sha": "eae020b77f855e00e906184c331313f248065ba8",
+      "short_sha": "eae020b",
+      "author": "github-actions[bot]",
+      "date": "2026-09-01T14:38:09Z",
+      "subject": "chore: refresh UI changelog from git history",
+      "url": "https://github.com/mlopeznxtaura/app7-nextaura-us/commit/eae020b77f855e00e906184c331313f248065ba8"
+    },
+    {
+      "sha": "49bf7a19be529e737dadedbd9d063edf560cfb34",
+      "short_sha": "49bf7a1",
+      "author": "mlopeznxtaura",
+      "date": "2026-09-01T07:37:50-07:00",
+      "subject": "Add git-backed changelog footer and workflow E2E test script.",
+      "url": "https://github.com/mlopeznxtaura/app7-nextaura-us/commit/49bf7a19be529e737dadedbd9d063edf560cfb34"
+    },
+    {
+      "sha": "e8ec994e7cb2eaf7143079995e00f6c24f57b2d1",
+      "short_sha": "e8ec994",
+      "author": "mlopeznxtaura",
+      "date": "2026-09-01T07:25:36-07:00",
+      "subject": "Add gated run playbook workflow and 377-row SFT intelligence corpus.",
+      "url": "https://github.com/mlopeznxtaura/app7-nextaura-us/commit/e8ec994e7cb2eaf7143079995e00f6c24f57b2d1"
+    },
+    {
+      "sha": "81d3548721548f8bbca21870b9daeea3a89f6d99",
+      "short_sha": "81d3548",
+      "author": "mlopeznxtaura",
+      "date": "2026-08-31T17:03:14-07:00",
+      "subject": "Reset session between ladder phases when stream changes (vjepa to multimodal).",
+      "url": "https://github.com/mlopeznxtaura/app7-nextaura-us/commit/81d3548721548f8bbca21870b9daeea3a89f6d99"
+    },
+    {
+      "sha": "fc784eb267252f0e732628a991740860ef7055f9",
+      "short_sha": "fc784eb",
+      "author": "mlopeznxtaura",
+      "date": "2026-08-31T17:02:14-07:00",
+      "subject": "Show local checkpoint basename in inference labels when COS alias is loaded.",
+      "url": "https://github.com/mlopeznxtaura/app7-nextaura-us/commit/fc784eb267252f0e732628a991740860ef7055f9"
+    },
+    {
+      "sha": "7ba2fbb6515d0522cca7f4a62e5841a2d68e5429",
+      "short_sha": "7ba2fbb",
+      "author": "mlopeznxtaura",
+      "date": "2026-08-31T17:01:49-07:00",
+      "subject": "Fix inference labels to reflect current training checkpoint, not hardcoded 50M.",
+      "url": "https://github.com/mlopeznxtaura/app7-nextaura-us/commit/7ba2fbb6515d0522cca7f4a62e5841a2d68e5429"
+    },
+    {
+      "sha": "a9d53c97fdfafc9f55eb82649aa314058f0bdc85",
+      "short_sha": "a9d53c9",
+      "author": "mlopeznxtaura",
+      "date": "2026-08-31T17:00:09-07:00",
+      "subject": "Add autonomous drive-agent with infer smoke and RM gates between ladder phases.",
+      "url": "https://github.com/mlopeznxtaura/app7-nextaura-us/commit/a9d53c97fdfafc9f55eb82649aa314058f0bdc85"
+    },
+    {
+      "sha": "9fd3fd43ae1e30f9bd0e05ba47be0a2c1bb27959",
+      "short_sha": "9fd3fd4",
+      "author": "mlopeznxtaura",
+      "date": "2026-08-31T15:58:17-07:00",
+      "subject": "Add run playbook with 10M ladder, multimodal/V-JEPA step 1, and log-reading guide.",
+      "url": "https://github.com/mlopeznxtaura/app7-nextaura-us/commit/9fd3fd43ae1e30f9bd0e05ba47be0a2c1bb27959"
+    },
+    {
+      "sha": "8c5fd8c21152fd50167269bc1579f1ac449f5bd6",
+      "short_sha": "8c5fd8c",
+      "author": "mlopeznxtaura",
+      "date": "2026-08-31T15:54:21-07:00",
+      "subject": "Add run goal tracker above live log for training intention and progress.",
+      "url": "https://github.com/mlopeznxtaura/app7-nextaura-us/commit/8c5fd8c21152fd50167269bc1579f1ac449f5bd6"
+    },
+    {
+      "sha": "977b6fe71e60a1f8f3d90fc4647ffd484104f9fc",
+      "short_sha": "977b6fe",
+      "author": "mlopeznxtaura",
+      "date": "2026-08-31T12:42:29-07:00",
+      "subject": "Add multimodal and V-JEPA recipe cheat sheet to app7 UI.",
+      "url": "https://github.com/mlopeznxtaura/app7-nextaura-us/commit/977b6fe71e60a1f8f3d90fc4647ffd484104f9fc"
+    }
+  ]
+}

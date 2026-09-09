@@ -1,0 +1,5 @@
+{
+  "_note": "Static stub — live contract is dynamic at GET /agent.json",
+  "redirect": "/agent.json",
+  "host": "app9.nextaura.us"
+}

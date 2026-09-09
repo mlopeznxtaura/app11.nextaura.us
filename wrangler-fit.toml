@@ -1,0 +1,8 @@
+name = "nextaura-app8"
+main = "worker-fit.js"
+compatibility_date = "2026-08-16"
+account_id = "683f127c03af82423467b6fad679252c"
+
+[[routes]]
+pattern = "app8.nextaura.fit"
+custom_domain = true

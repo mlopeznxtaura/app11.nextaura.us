@@ -1,0 +1,8 @@
+.venv
+.gpu.env
+*.pt
+train_mac.log
+parked
+proxy
+__pycache__
+.git
