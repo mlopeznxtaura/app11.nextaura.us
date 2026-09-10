@@ -29,7 +29,7 @@ HF_TOKEN = os.environ.get("HF_TOKEN", "").strip()
 IBM_API_KEY = os.environ.get("IBM_CLOUD_API_KEY", "").strip()
 COS_CRN = os.environ.get(
     "COS_CRN",
-    "crn:v1:bluemix:public:cloud-object-storage:global:a/ee54102c4e17411fa08552596d94e53d:49c90492-ab55-4cba-90f4-589623751191::",
+    "",
 )
 COS_BUCKET = os.environ.get("COS_BUCKET", "nextaura-fineweb-stage1")
 COS_ENDPOINT = os.environ.get(

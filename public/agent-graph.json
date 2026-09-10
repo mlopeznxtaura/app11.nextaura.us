@@ -1,158 +1,21 @@
 {
-  "schema_version": "1",
-  "kind": "agent-graph-engineering-memory",
-  "platform": "nextaura-agent-platform",
-  "scope": ["app7.nextaura.us", "app8.nextaura.us", "app9.nextaura.us"],
-  "updated_at": "2026-09-06",
-  "scrape_first": "GET /agent.json on each lab. Never scrape HTML for recipe or status.",
-  "labs": [
+  "schema": "nextaura-agent-graph/1",
+  "scope": ["app11.nextaura.us"],
+  "nodes": [
     {
-      "id": "app7",
-      "host": "app7.nextaura.us",
-      "url": "https://app7.nextaura.us",
-      "origin": "http://150-239-225-134.sslip.io",
-      "ip": "150.239.225.134",
-      "gpu": "2× L40S",
-      "role": "fineweb-distill-archive",
-      "primary": false,
-      "code": "app7-nextaura-us",
-      "remote": "/opt/app7-nextaura-us",
-      "worker": "nextaura-app7-us",
-      "voice_to_plan": "https://app7.nextaura.fit",
-      "mission": "Healthy text pretrain / distill / Nemotron-SWE lineage. Do not stop this slot for V-JEPA experiments.",
-      "proven": [
-        "FineWeb sample-10BT at ~47k tok/s on 360M-class arch",
-        "Nemotron SWE SFT: loss ~1.16 @ ~59k tok/s on 237M",
-        "Distill-live teacher→student JSONL during train",
-        "RM gating via OpenAssistant Deberta"
-      ],
-      "status_note": "platform_index marks retired-archive after Nemotron SWE lineage; GUI+eval modules merged into app9."
-    },
-    {
-      "id": "app8",
-      "host": "app8.nextaura.us",
-      "url": "https://app8.nextaura.us",
-      "origin": "http://169-59-163-90.sslip.io",
-      "ip": "169.59.163.90",
-      "gpu": "1× L40S",
-      "role": "mcf-vjepa-experimental",
-      "primary": true,
-      "code": "app8-nextaura-us",
-      "remote": "/opt/app8-nextaura-us",
-      "worker": "nextaura-app8-us",
-      "cos_bucket": "nextaura-app8-stage1",
-      "service": "app8-nextaura.service",
-      "ssh_hint": "ubuntu@169.59.163.90 (golias_ibm)",
-      "mission": "MCF / V-JEPA world-model slot. Token economics differ from FineWeb; packing required.",
-      "auto_resume": true,
-      "proven": [
-        "Speed telemetry tok/s, s/step, MB/hr",
-        "Checkpoint auto-prune (disk filled at 31 ckpts)",
-        "MCF v2 HLS: pack 128 frames, batch 256, ~1.5B token / 5.25 GB target"
-      ],
-      "failed_recipe": {
-        "id": "mcf-recipe-v1-stream-a",
-        "why": "Copied FineWeb batch 768 + 24 GB byte target onto 50–200 token V-JEPA metadata rows. ~23 min/step, 0.7 MB/step, months to 24 GB."
-      }
-    },
-    {
-      "id": "app9",
-      "host": "app9.nextaura.us",
-      "url": "https://app9.nextaura.us",
-      "origin": "http://150-239-227-60.sslip.io",
-      "ip": "150.239.227.60",
-      "gpu": "2× L40S 96GB",
-      "data_volume": "/data 500GB",
-      "role": "merged-primary-lab",
-      "primary": true,
-      "code": "app9-nextaura-us",
-      "remote": "/opt/app9-nextaura-us",
-      "worker": "nextaura-app9-us",
-      "cos_bucket": "nextaura-app9-stage1",
-      "cos_vjepa_prefix": "app9/datasets/vjepa/",
-      "service": "app9-nextaura.service",
-      "voice_to_plan": "https://app9.nextaura.fit",
-      "mission": "Merge of app7 GUI/eval + app8 trainer. Primary for Muse-Glimmer-30B QLoRA/GRPO and continued GPT lab.",
-      "lineage": {
-        "from_app7": "GUI, Nemotron SWE, eval panel, distill, platform_index, convert_model import_hf_causal",
-        "from_app8": "train_engine, V-JEPA pack/world mix, GradScaler, checkpoint prune, speed metrics"
-      }
+      "id": "app11",
+      "label": "app11",
+      "host": "app11.nextaura.us",
+      "url": "https://app11.nextaura.us",
+      "kind": "host",
+      "rank": "open-source",
+      "notes": "CPU-first public training lab. No GPU or secrets required to explore the GUI."
     }
   ],
-  "nodes": [
-    {"id": "scrape", "label": "GET /agent.json", "rank": "discover", "kind": "protocol"},
-    {"id": "app7", "label": "app7", "rank": "lab", "kind": "host"},
-    {"id": "app8", "label": "app8", "rank": "lab", "kind": "host"},
-    {"id": "app9", "label": "app9", "rank": "lab", "kind": "host"},
-    {"id": "fineweb", "label": "FineWeb / mixed HF", "rank": "data", "kind": "corpus"},
-    {"id": "distill", "label": "Distill JSONL", "rank": "data", "kind": "corpus"},
-    {"id": "vjepa", "label": "V-JEPA latents", "rank": "data", "kind": "corpus"},
-    {"id": "muse", "label": "Muse-Glimmer-30B", "rank": "data", "kind": "base_model"},
-    {"id": "pack", "label": "vjepa_pack 128", "rank": "prep", "kind": "transform"},
-    {"id": "feed", "label": "feed_text buffer", "rank": "prep", "kind": "transform"},
-    {"id": "train", "label": "TrainEngine step", "rank": "train", "kind": "compute"},
-    {"id": "rm", "label": "RM panel gate", "rank": "gate", "kind": "eval"},
-    {"id": "history", "label": "run_history", "rank": "memory", "kind": "memory"},
-    {"id": "cos", "label": "IBM COS ckpt", "rank": "memory", "kind": "storage"}
-  ],
-  "edges": [
-    {"from": "scrape", "to": "app7", "rel": "discovers"},
-    {"from": "scrape", "to": "app8", "rel": "discovers"},
-    {"from": "scrape", "to": "app9", "rel": "discovers"},
-    {"from": "app7", "to": "fineweb", "rel": "trains_on"},
-    {"from": "app7", "to": "distill", "rel": "trains_on"},
-    {"from": "app8", "to": "vjepa", "rel": "trains_on"},
-    {"from": "app9", "to": "vjepa", "rel": "can_train_on"},
-    {"from": "app9", "to": "distill", "rel": "can_train_on"},
-    {"from": "app9", "to": "muse", "rel": "finetunes"},
-    {"from": "fineweb", "to": "feed", "rel": "long_docs"},
-    {"from": "distill", "to": "feed", "rel": "teacher_rows"},
-    {"from": "vjepa", "to": "pack", "rel": "must_pack"},
-    {"from": "pack", "to": "feed", "rel": "documents"},
-    {"from": "muse", "to": "train", "rel": "qlora_grpo"},
-    {"from": "feed", "to": "train", "rel": "need_block_x_batch"},
-    {"from": "train", "to": "rm", "rel": "gate"},
-    {"from": "train", "to": "cos", "rel": "persist"},
-    {"from": "rm", "to": "history", "rel": "verdict"},
-    {"from": "history", "to": "scrape", "rel": "next_agent_reads", "back_edge": true}
-  ],
+  "edges": [],
   "invariants": [
-    "Scrape /agent.json, /api/status, /api/runs/history — not HTML.",
-    "need = block_size * batch_size + 1 tokens before one optimizer step.",
-    "V-JEPA Hub rows are 50–200 tokens. FineWeb rows are thousands. Same batch is a category error.",
-    "MCF v2: pack 128 frames, batch 256 (micro 64×4), stop on tokens (~1.5B / 5.25 GB), not 24 GB unpacked.",
-    "Do not escalate a sokoban-only smoke (loss→0.15) as proof the recipe scales.",
-    "Finetune requires a pretrained checkpoint. Seed-only SFT from scratch fails around 17M (loss ~5+).",
-    "Pretrain lr 2e-4–3e-4; finetune lr 1e-5–1e-4. Toggle the scaling table first.",
-    "AUTO_RESUME=1 on app8: POST reset-session and resume:false before a new recipe.",
-    "Keep MAX_CHECKPOINTS_KEEP; app8 filled the disk at 31 checkpoints.",
-    "RM delta within ~0.1 is noise. Negative delta = discard and roll back.",
-    "Do not stop a healthy FineWeb/SWE run on one lab to unblock V-JEPA on another.",
-    "Loss <1 on polluted mixed streams is overfit, not success."
-  ],
-  "agent_loop": [
-    "GET /agent.json (and /agent-graph.json on app9)",
-    "GET /api/runs/history then /api/health then /api/status",
-    "Choose lab by mission: app7 text lineage, app8 MCF, app9 merge/Muse",
-    "Match data morphology to batch and stop condition",
-    "POST /api/start with apply toggles; resume:false after reset-session if recipe changed",
-    "Poll /api/status until complete; require step cadence and MB/hr growth",
-    "POST /api/eval/reward-panel {limit:20, record:true}",
-    "POST /api/runs/record the lesson"
-  ],
-  "vjepa_ok_datasets": [
-    "qinglinhou/sokoban-10k-vjepa2-tokenized",
-    "cbctr/cs2-10k-vjepa2-latents-300",
-    "rookierufus/ego10k-vjepa-latents",
-    "rookierufus/Vjepa_mamba_dataset"
-  ],
-  "key_files": {
-    "contract": "agent_contract.py",
-    "trainer_buffer": "train_engine.py",
-    "vjepa_pack": "vjepa_pack.py",
-    "world_mix": "world_model_mix.py",
-    "handoff": "docs/MCF-VJEPA-HANDOFF-NEXT-AGENT.md",
-    "merge": "MERGE_NOTES.md",
-    "muse": "muse/PLAN.md"
-  }
+    "Checkpoints stay local unless optional COS/UpCloud env is set",
+    "TRAIN_DEVICE defaults to cpu",
+    "HF_TOKEN optional for streaming datasets"
+  ]
 }

@@ -1,18 +1,19 @@
-"""Self-authored agent index for app9.nextaura.us — scrape-first, no HTML guessing."""
+"""Self-authored agent index for app11.nextaura.us — scrape-first, no HTML guessing."""
 
 from __future__ import annotations
 
+import os
 from datetime import datetime, timezone
 from typing import Any
 
-HOST = "app9.nextaura.us"
-PUBLIC_URL = "https://app9.nextaura.us"
-CANONICAL_URL = "https://app9.nextaura.us"
-FIT_HOST = "app9.nextaura.fit"
-FIT_URL = "https://app9.nextaura.fit"
-APP_ID = "app9"
+HOST = os.environ.get("PUBLIC_HOST", "app11.nextaura.us")
+PUBLIC_URL = os.environ.get("PUBLIC_URL", "https://app11.nextaura.us")
+CANONICAL_URL = PUBLIC_URL
+FIT_HOST = os.environ.get("FIT_HOST", "app11.nextaura.fit")
+FIT_URL = os.environ.get("FIT_URL", "https://app11.nextaura.fit")
+APP_ID = "app11"
 SCHEMA_VERSION = "1"
-VOICE_TO_PLAN_URL = "https://app9.nextaura.fit"
+VOICE_TO_PLAN_URL = os.environ.get("VOICE_TO_PLAN_URL", "https://app11.nextaura.fit")
 
 DATA_SOURCE_CATALOG: list[dict[str, str]] = [
     {"id": "mixed", "label": "Mixed (local JSONL + HF streams)", "mode": "pretrain", "notes": "Default. Interleaves local corpus with enabled HF chips."},
@@ -171,7 +172,7 @@ def build_agent_contract(*, live: dict[str, Any] | None = None) -> dict[str, Any
     )
     how_built = (
         "FastAPI + PyTorch TrainEngine on UpCloud train-1 (212.147.237.163), "
-        "Cloudflare worker nextaura-app9-us → origin. IBM COS for checkpoint persistence. "
+        "Cloudflare worker nextaura-app11-us → origin. Optional IBM COS for checkpoint persistence. "
         "Fork of app2 pretrain stack; default ~51M params (8L×512d×8h, block 256, vocab 50257)."
     )
     page_text = (
@@ -196,7 +197,7 @@ def build_agent_contract(*, live: dict[str, Any] | None = None) -> dict[str, Any
         ],
         "origin_url": live.get("origin_url"),
         "origin": "digitalocean-gpu",
-        "worker_or_pages": "nextaura-app9-us",
+        "worker_or_pages": "nextaura-app11-us",
         "related_hosts": {
             "canonical_training_lab": CANONICAL_URL,
             "marketing_fit_entry": FIT_URL,

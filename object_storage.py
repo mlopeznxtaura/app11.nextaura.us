@@ -6,9 +6,10 @@ import os
 from datetime import datetime, timezone
 from typing import Any
 
-UPCLOUD_S3_ENDPOINT = os.environ.get("UPCLOUD_S3_ENDPOINT", "https://hei5u.upcloudobjects.com")
-UPCLOUD_S3_BUCKET = os.environ.get("UPCLOUD_S3_BUCKET", "nextaura-models")
-UPCLOUD_S3_PREFIX = os.environ.get("UPCLOUD_S3_PREFIX", "app7/checkpoints/").rstrip("/") + "/"
+UPCLOUD_S3_ENDPOINT = os.environ.get("UPCLOUD_S3_ENDPOINT", "").strip()
+UPCLOUD_S3_BUCKET = os.environ.get("UPCLOUD_S3_BUCKET", "").strip()
+_prefix = os.environ.get("UPCLOUD_S3_PREFIX", "checkpoints/").strip().rstrip("/")
+UPCLOUD_S3_PREFIX = (f"{_prefix}/" if _prefix else "checkpoints/")
 UPCLOUD_S3_REGION = os.environ.get("UPCLOUD_S3_REGION", "us-1")
 UPCLOUD_S3_VERIFY_SSL = os.environ.get("UPCLOUD_S3_VERIFY_SSL", "false").strip().lower() in ("1", "true", "yes")
 

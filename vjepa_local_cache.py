@@ -59,7 +59,7 @@ def _cos_client():
         ibm_api_key_id=api_key,
         ibm_service_instance_id=os.environ.get(
             "COS_CRN",
-            "crn:v1:bluemix:public:cloud-object-storage:global:a/ee54102c4e17411fa08552596d94e53d:49c90492-ab55-4cba-90f4-589623751191::",
+            "",
         ),
         config=Config(signature_version="oauth"),
         endpoint_url=os.environ.get(
@@ -70,7 +70,7 @@ def _cos_client():
 
 
 def _cos_bucket() -> str:
-    return os.environ.get("COS_BUCKET", "nextaura-app9-stage1")
+    return os.environ.get("COS_BUCKET", "").strip()
 
 
 def _cos_key(name: str) -> str:

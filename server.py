@@ -1,4 +1,4 @@
-"""app11.nextaura.us — MCF / V-JEPA experimental training slot (app7 fork)."""
+"""app11.nextaura.us — open-source CPU-first NextAura training lab."""
 
 from __future__ import annotations
 
@@ -110,8 +110,8 @@ from timemoe_baseline import (
     save_baseline_state,
 )
 
-HOST = "app11.nextaura.us"
-PUBLIC_URL = "https://app11.nextaura.us"
+HOST = os.environ.get("PUBLIC_HOST", "app11.nextaura.us")
+PUBLIC_URL = os.environ.get("PUBLIC_URL", "https://app11.nextaura.us")
 VOICE_TO_PLAN_URL = "https://app7.nextaura.fit"
 DATASET_ID = "HuggingFaceFW/fineweb"
 HF_SHUFFLE_BUFFER = 8192
@@ -641,11 +641,8 @@ def _clear_training_heartbeat() -> None:
 
 
 IBM_API_KEY = os.environ.get("IBM_CLOUD_API_KEY", "").strip()
-COS_CRN = os.environ.get(
-    "COS_CRN",
-    "crn:v1:bluemix:public:cloud-object-storage:global:a/ee54102c4e17411fa08552596d94e53d:49c90492-ab55-4cba-90f4-589623751191::",
-)
-COS_BUCKET = os.environ.get("COS_BUCKET", "nextaura-app9-stage1")
+COS_CRN = os.environ.get("COS_CRN", "").strip()
+COS_BUCKET = os.environ.get("COS_BUCKET", "").strip()
 COS_ENDPOINT = os.environ.get(
     "COS_ENDPOINT",
     "https://s3.us-south.cloud-object-storage.appdomain.cloud",
@@ -737,7 +734,8 @@ def _pick_device() -> str:
     return "cpu"
 
 
-os.environ.setdefault("TRAIN_DEVICE","cpu")\nDEVICE = _pick_device()
+os.environ.setdefault("TRAIN_DEVICE", "cpu")
+DEVICE = _pick_device()
 if DEVICE == "cuda":
     os.environ.setdefault("TRAIN_BATCH_SIZE", os.environ.get("TRAIN_BATCH_SIZE", "1024"))
 elif DEVICE == "mps":

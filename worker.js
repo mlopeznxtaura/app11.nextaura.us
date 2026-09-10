@@ -1,4 +1,5 @@
-const ORIGIN = "http://150-239-227-60.sslip.io";
+// Set ORIGIN to your IBM Code Engine URL after deploy (see scripts/deploy-app11-ce.ps1).
+const ORIGIN = "https://app11-nextaura-us.284w7l87aq94.us-south.codeengine.appdomain.cloud";
 
 export default {
   async fetch(request) {
@@ -17,7 +18,7 @@ export default {
       redirect: "follow",
     });
     const out = new Headers(res.headers);
-    out.set("x-proxied-by", "nextaura-app9-us");
+    out.set("x-proxied-by", "nextaura-app11-us");
     return new Response(res.body, { status: res.status, headers: out });
   },
 };

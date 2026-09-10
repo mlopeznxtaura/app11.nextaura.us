@@ -1,6 +1,7 @@
 .gpu.env
 .env
 .env.*
+!.env.example
 .venv/
 __pycache__/
 *.py[cod]
@@ -9,3 +10,6 @@ __pycache__/
 checkpoints/
 data/*.jsonl
 *.pt
+*.pth
+node_modules/
+.wrangler/
