@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check button states on app9.nextaura.us."""
+"""Check button states on app11.nextaura.us."""
 from playwright.sync_api import sync_playwright
 
 
@@ -7,7 +7,7 @@ def main():
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
-        page.goto('https://app9.nextaura.us', timeout=30000)
+        page.goto('https://app11.nextaura.us', timeout=30000)
 
         buttons = page.query_selector_all('button')
         for btn in buttons[:20]:
@@ -25,3 +25,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

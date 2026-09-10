@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Check app9.nextaura.us API status."""
+"""Check app11.nextaura.us API status."""
 import requests
 import json
 
 
 def main():
     try:
-        resp = requests.get('https://app9.nextaura.us/api/status', timeout=10)
+        resp = requests.get('https://app11.nextaura.us/api/status', timeout=10)
         print(f'Status API: {resp.status_code}')
         if resp.status_code == 200:
             data = resp.json()
@@ -20,3 +20,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

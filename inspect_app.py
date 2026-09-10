@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Inspect app9.nextaura.us UI."""
+"""Inspect app11.nextaura.us UI."""
 import sys
 from playwright.sync_api import sync_playwright
 
@@ -10,7 +10,7 @@ def main():
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
-        page.goto('https://app9.nextaura.us', timeout=30000)
+        page.goto('https://app11.nextaura.us', timeout=30000)
         
         print("=" * 60)
         print(f"TITLE: {page.title()}")
@@ -59,3 +59,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

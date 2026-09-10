@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Start Muse-Glimmer SFT via UI interaction on app9.nextaura.us."""
+"""Start Muse-Glimmer SFT via UI interaction on app11.nextaura.us."""
 from playwright.sync_api import sync_playwright
 
 
@@ -7,7 +7,7 @@ def main():
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
-        page.goto('https://app9.nextaura.us', timeout=30000)
+        page.goto('https://app11.nextaura.us', timeout=30000)
 
         print("Page title:", page.title())
 
@@ -23,7 +23,7 @@ def main():
         # Check the config that was applied
         import requests
         try:
-            r = requests.get('https://app9.nextaura.us/api/status', timeout=5)
+            r = requests.get('https://app11.nextaura.us/api/status', timeout=5)
             d = r.json()
             print("Model backend:", d.get('model_backend'))
             print("Tokenizer:", d.get('tokenizer_id'))
@@ -50,3 +50,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

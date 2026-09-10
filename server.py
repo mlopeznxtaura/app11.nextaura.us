@@ -1,4 +1,4 @@
-"""app9.nextaura.us — MCF / V-JEPA experimental training slot (app7 fork)."""
+"""app11.nextaura.us — MCF / V-JEPA experimental training slot (app7 fork)."""
 
 from __future__ import annotations
 
@@ -110,8 +110,8 @@ from timemoe_baseline import (
     save_baseline_state,
 )
 
-HOST = "app9.nextaura.us"
-PUBLIC_URL = "https://app9.nextaura.us"
+HOST = "app11.nextaura.us"
+PUBLIC_URL = "https://app11.nextaura.us"
 VOICE_TO_PLAN_URL = "https://app7.nextaura.fit"
 DATASET_ID = "HuggingFaceFW/fineweb"
 HF_SHUFFLE_BUFFER = 8192
@@ -737,7 +737,7 @@ def _pick_device() -> str:
     return "cpu"
 
 
-DEVICE = _pick_device()
+os.environ.setdefault("TRAIN_DEVICE","cpu")\nDEVICE = _pick_device()
 if DEVICE == "cuda":
     os.environ.setdefault("TRAIN_BATCH_SIZE", os.environ.get("TRAIN_BATCH_SIZE", "1024"))
 elif DEVICE == "mps":
@@ -5601,3 +5601,4 @@ def infer_ask(body: dict = Body(default_factory=dict)):
 @app.exception_handler(HTTPException)
 def http_exc(_request, exc: HTTPException):
     return JSONResponse(status_code=exc.status_code, content={"error": exc.detail})
+
